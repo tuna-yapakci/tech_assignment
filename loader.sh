@@ -7,6 +7,6 @@ mode="664"
 
 rm -f /dev/${device}
 
-major=$(awk "\\$2= =\"$module\" {print \\$1}" /proc/devices)
+major=`cat /proc/devices | awk "{if(\\$2==\"$device\")print \\$1}"`
 
 echo $major
