@@ -24,7 +24,7 @@ struct gpio_dev g_dev;
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp);
 static ssize_t gpio_write(struct file *filp, char __user *buff, size_t count, loff_t *offp);
 static int gpio_open(struct inode *inode, struct file *file);
-static int gpio_close(struct inode *inode, struct file *file)
+static int gpio_close(struct inode *inode, struct file *file);
 
 static struct file_operations gpio_fops = {
     .owner = THIS_MODULE,
