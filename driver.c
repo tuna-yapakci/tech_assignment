@@ -7,7 +7,6 @@
 #include <linux/stat.h>
 #include <linux/sched.h>
 #include <linux/cdev.h>
-#include <linux/types.h>
 #include <linux/gpio.h>
 MODULE_LICENSE("GPL");
 
@@ -15,7 +14,7 @@ struct gpio_dev {
     struct cdev cdev;
 }
 
-dev_t dev = 0;
+static dev_t dev = 0;
 struct gpio_dev g_dev;
 
 static int gpio_open(struct inode *inode, struct file *file);
