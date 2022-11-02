@@ -47,12 +47,12 @@ static int chrdev_allocated = 0;
 static int device_registered = 0; //TODO rename these
 
 //self explanatory
-static void cleanup_func(){
+static void cleanup_func(void){
     if(chrdev_allocated) {
         unregister_chrdev_region(dev,1);
     }
     if(device_registered) {
-        cdev_del(&(g_dev->cdev));
+        cdev_del(&(g_dev.cdev));
     }
 }
 
@@ -61,7 +61,7 @@ static int gpio_open(struct inode *inode, struct file *file){
     return 0;
 }
 
-static int __init driver_init(){
+static int __init driver_init(void){
     printk("The chosen pin is %d\n", gpio_pin_number);
     
     chrdev_allocated = 1;
@@ -83,7 +83,7 @@ static int __init driver_init(){
     return 0;
 }
 
-static void __exit driver_exit(){
+static void __exit driver_exit(void){
     cleanup_func();
     printk("Driver removed\n");
 }
