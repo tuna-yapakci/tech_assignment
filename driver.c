@@ -76,12 +76,34 @@ static int gpio_close(struct inode *inode, struct file *file){
 }
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp){
-    printk("I read something");
+    uint8_t gpio_state = gpio_get_value(GPIO_21);
+    
+    count = 1;
+    if(copy_to_user(buff, &gpio_state, len) > 0) {
+        printk(KERN_WARNING "ERROR");
+    }
+
+    printk(KERN_INFO "GPIO_21 state = %d \n", gpio_state);
     return 0;
 }
 static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp){
-    printk("Something was written to me");
-    return 0;
+    uint8_t rec_buff[10] = {0};
+
+    if(copy_from_user(rec_buff, buff, count) > 0) {
+        printk(KERN_WARNING "ERROR1");
+    }
+
+    if (rec_buff[0]=='1'){
+        gpio_set_value(GPIO_21, 1);
+    }
+    else if (rec_buff[0]=='0'){
+        gpio_set_value(GPIO_21, 0);
+    }
+    else {
+        printk(KERN_WARNING "ERROR2");
+    }
+
+    return count;
 }
 
 
@@ -103,6 +125,22 @@ static int __init gpio_driver_init(void){
         cleanup_func();
         return -1;
     }
+
+    if(gpio_is_valid(GPIO_21) == false){
+        printk(KERN_WARNING "Invalid GPIO\n");
+        cleanup_func();
+        return -1;
+    }
+
+    if(gpio_request(GPIO_21, "GPIO_21") < 0) {
+        printk(KERN_WARNING "GPIO request error\n");
+        cleanup_func();
+        return -1;
+    }
+
+    gpio_direction_output(GPIO_21, 0); //TODO change this
+
+    gpio_export(GPIO_21, false);
 
     printk("Driver loaded\n");
     return 0;
