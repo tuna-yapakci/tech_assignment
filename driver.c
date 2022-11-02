@@ -7,6 +7,7 @@
 #include <linux/stat.h>
 #include <linux/sched.h>
 #include <linux/cdev.h>
+#include <linux/device.h>
 #include <linux/gpio.h>
 MODULE_LICENSE("GPL");
 
@@ -17,6 +18,8 @@ struct gpio_dev {
 dev_t dev = 0;
 struct gpio_dev g_dev;
 
+static int gpio_open(struct inode *inode, struct file *file);
+
 static struct file_operations gpio_fops = {
     .owner = THIS_MODULE,
     .open = gpio_open,
@@ -26,7 +29,7 @@ static struct file_operations gpio_fops = {
 };
 
 static int gpio_setup_cdev(struct gpio_dev *g_dev){
-    cdev_init(&dev->cdev, &gpio_fops);
+    cdev_init(&g_dev->cdev, &gpio_fops);
     g_dev->cdev.owner = THIS_MODULE;
     g_dev->cdev.ops = &gpio_fops;
     if(cdev_add(&g_dev->cdev, dev, 1) < 0){
