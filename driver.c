@@ -12,7 +12,7 @@ MODULE_LICENSE("GPL");
 
 struct gpio_dev {
     struct cdev cdev;
-}
+};
 
 static dev_t dev = 0;
 struct gpio_dev g_dev;
