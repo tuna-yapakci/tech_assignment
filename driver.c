@@ -52,6 +52,7 @@ module_param(gpio_pin_number, int, S_IRUGO);
 //cleanup helper variables, useful for error handling
 static int chrdev_allocated = 0;
 static int device_registered = 0; //TODO rename these
+static int gpio_requested = 0;
 
 //self explanatory
 static void cleanup_func(void){
@@ -60,6 +61,9 @@ static void cleanup_func(void){
     }
     if(device_registered) {
         cdev_del(&(g_dev.cdev));
+    }
+    if(gpio_requested) {
+        gpio_free(GPIO_21);
     }
 }
 
@@ -132,6 +136,7 @@ static int __init gpio_driver_init(void){
         return -1;
     }
 
+    gpio_requested = 1;
     if(gpio_request(GPIO_21, "GPIO_21") < 0) {
         printk(KERN_WARNING "GPIO request error\n");
         cleanup_func();
