@@ -79,7 +79,7 @@ static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, lof
     printk("I read something");
     return 0;
 }
-static ssize_t gpio_write(struct file *filp, char __user *buff, size_t count, loff_t *offp){
+static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp){
     printk("Something was written to me");
     return 0;
 }
