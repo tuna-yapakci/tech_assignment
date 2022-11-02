@@ -22,7 +22,7 @@ static struct class *dev_class;
 struct gpio_dev g_dev;
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp);
-static ssize_t gpio_write(struct file *filp, char __user *buff, size_t count, loff_t *offp);
+static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp);
 static int gpio_open(struct inode *inode, struct file *file);
 static int gpio_close(struct inode *inode, struct file *file);
 
