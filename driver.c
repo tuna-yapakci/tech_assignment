@@ -7,7 +7,7 @@
 #include <linux/stat.h>
 #include <linux/sched.h>
 #include <linux/cdev.h>
-#include <linux/device.h>
+#include <linux/types.h>
 #include <linux/gpio.h>
 MODULE_LICENSE("GPL");
 
