@@ -5,6 +5,7 @@ mode="664"
 
 /sbin/insmod ${module}.ko gpio_pin_number=21 || exit 1
 
+
 rm -f /dev/${device}
 
 major=`cat /proc/devices | awk "{if(\\$2==\"$device\")print \\$1}"`
