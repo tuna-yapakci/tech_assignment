@@ -33,6 +33,7 @@ static struct file_operations gpio_fops = {
     .write = gpio_write,
 };
 
+
 static int gpio_setup_cdev(struct gpio_dev *g_dev){
     cdev_init(&g_dev->cdev, &gpio_fops);
     g_dev->cdev.owner = THIS_MODULE;
