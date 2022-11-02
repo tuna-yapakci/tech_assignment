@@ -8,23 +8,30 @@
 #include <linux/sched.h>
 #include <linux/cdev.h>
 #include <linux/gpio.h>
+#include <asm/uaccess.h>
 MODULE_LICENSE("GPL");
+
+#define GPIO_21 (21)
 
 struct gpio_dev {
     struct cdev cdev;
 };
 
 static dev_t dev = 0;
+static struct class *dev_class;
 struct gpio_dev g_dev;
 
+static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp);
+static ssize_t gpio_write(struct file *filp, char __user *buff, size_t count, loff_t *offp);
 static int gpio_open(struct inode *inode, struct file *file);
+static int gpio_close(struct inode *inode, struct file *file)
 
 static struct file_operations gpio_fops = {
     .owner = THIS_MODULE,
     .open = gpio_open,
-    //.release = gpio_release,
-    //.read = gpio_read,
-    //.write = gpio_write,
+    .release = gpio_close,
+    .read = gpio_read,
+    .write = gpio_write,
 };
 
 static int gpio_setup_cdev(struct gpio_dev *g_dev){
@@ -56,12 +63,28 @@ static void cleanup_func(void){
     }
 }
 
+
+
 static int gpio_open(struct inode *inode, struct file *file){
     printk("Device file opened\n");
     return 0;
 }
 
+static int gpio_close(struct inode *inode, struct file *file){
+    printk("Device file closed");
+    return 0;
+}
+
+static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp){
+
+}
+static ssize_t gpio_write(struct file *filp, char __user *buff, size_t count, loff_t *offp){
+
+}
+
+
 static int __init gpio_driver_init(void){
+    // TODO check if the given number is valid
     printk("The chosen pin is %d\n", gpio_pin_number);
     
     chrdev_allocated = 1;
