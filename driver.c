@@ -16,13 +16,19 @@ static int gpio_pin_number = -1;
 module_param(gpio_pin_number, int, S_IRUGO);
 
 static int __init driver_init(void){
-    printk(KERN_ALERT "Driver loaded\n");
-    printk("The given number is %d", gpio_pin_number);
+    printk("The chosen pin is %d\n", gpio_pin_number);
+    
+    if(alloc_chrdev_region(&dev, 0, 1, "custom_gpio_dev") < 0) {
+        printk(KERN_ALERT "Error during dev allocation\n");
+        return -1;
+    }
+    printk("Driver loaded\n");
     return 0;
 }
 
 static void __exit driver_exit(void){
     printk(KERN_ALERT "Driver removed\n");
+    unregister_chrdev_region(dev, 1);
 }
 
 module_init(driver_init);
