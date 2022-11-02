@@ -18,7 +18,6 @@ struct gpio_dev {
 };
 
 static dev_t dev = 0;
-static struct class *dev_class;
 struct gpio_dev g_dev;
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp);
@@ -79,7 +78,7 @@ static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, lof
     uint8_t gpio_state = gpio_get_value(GPIO_21);
     
     count = 1;
-    if(copy_to_user(buff, &gpio_state, len) > 0) {
+    if(copy_to_user(buff, &gpio_state, count) > 0) {
         printk(KERN_WARNING "ERROR");
     }
 
