@@ -76,10 +76,12 @@ static int gpio_close(struct inode *inode, struct file *file){
 }
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp){
-
+    printk("I read something");
+    return 0;
 }
 static ssize_t gpio_write(struct file *filp, char __user *buff, size_t count, loff_t *offp){
-
+    printk("Something was written to me");
+    return 0;
 }
 
 
