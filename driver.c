@@ -58,6 +58,7 @@ static void signal_to_pid_datarecv(void){ // change type maybe
     struct kernel_siginfo info;
     memset(&info, 0, sizeof(struct siginfo));
     info.si_signo = SIGDATARECV;
+    printk("PID: %d", task->pid);
     /*
     if (registered_process != -1) {
         if(send_sig_info(SIGDATARECV, &info, task) < 0) {
