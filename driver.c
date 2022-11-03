@@ -57,12 +57,14 @@ static int gpio_setup_cdev(struct gpio_dev *g_dev){
 static void signal_to_pid_datarecv(void){ // change type maybe
     struct kernel_siginfo info;
     memset(&info, 0, sizeof(struct siginfo));
+    /*
     info.si_signo = SIGDATARECV;
     if (registered_process != -1) {
         if(send_sig_info(SIGDATARECV, &info, task) < 0) {
             printk(KERN_WARNING "Error sending data receive signal\n");
         }
     }
+    */
 }
 
 
@@ -105,7 +107,7 @@ static int gpio_close(struct inode *inode, struct file *file){
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp){
     printk(KERN_INFO "Device read, sending signal");
-    //signal_to_pid_datarecv();
+    signal_to_pid_datarecv();
     /*
     uint8_t gpio_state = gpio_get_value(GPIO_21);
     
