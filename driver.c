@@ -37,7 +37,7 @@ static struct file_operations gpio_fops = {
     .release = gpio_close,
     .read = gpio_read,
     .write = gpio_write,
-    .unlocked_ioctl = gpioctl;
+    .unlocked_ioctl = gpioctl,
 };
 
 
