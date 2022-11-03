@@ -9,7 +9,7 @@
 
 #define MAGIC 'k'
 #define USER_APP_REG _IOW(MAGIC, 1, int*)
-#define SIGDATARECV 69
+#define SIGDATARECV 47
 
 void reader_func() {
     std::cout << "reader thread initialized" << std:: endl;
