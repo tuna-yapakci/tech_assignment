@@ -58,8 +58,10 @@ static void signal_to_pid_datarecv(void){ // change type maybe
     struct kernel_siginfo info;
     memset(&info, 0, sizeof(struct kernel_siginfo));
     info.si_signo = SIGDATARECV;
-    if(send_sig_info(SIGDATARECV, &info, task) < 0) {
-        printk(KERN_WARNING "Error sending data receive signal\n");
+    if (registered_process > 0){
+        if(send_sig_info(SIGDATARECV, &info, task) < 0) {
+            printk(KERN_WARNING "Error sending data receive signal\n");
+        }
     }
 }
 
