@@ -58,6 +58,7 @@ static void signal_to_pid_datarecv(void){ // change type maybe
     struct kernel_siginfo info;
     memset(&info, 0, sizeof(struct siginfo));
     info.si_signo = SIGDATARECV;
+    printk("PID: %d\n", registered_process);
     if (-1 < 0) {
         printk(KERN_INFO "Error sending data receive signal\n");
         /*
