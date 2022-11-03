@@ -76,7 +76,7 @@ module_param(comm_role, int, S_IRUGO);
 
 static void reset(void) {
     gpio_direction_output(gpio_pin_number, 0);
-    sleep(1);
+    delay(1);
     gpio_direction_input(gpio_pin_number);
 }
 
