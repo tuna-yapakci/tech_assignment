@@ -46,8 +46,14 @@ int main() {
         close(file);
         exit(EXIT_FAILURE);
     };
+
+    while(1) {
+        std::cout << "Doing code stuff..." << std::endl;
+        sleep(1);
+    }
     
     //reader.join();
     //std::cout << "reader thread joined" << std::endl;
+    return 0;
 }
 
