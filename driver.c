@@ -57,8 +57,8 @@ static int gpio_setup_cdev(struct gpio_dev *g_dev){
 static void signal_to_pid_datarecv(void){ // change type maybe
     struct kernel_siginfo info;
     memset(&info, 0, sizeof(struct siginfo));
-    /*
     info.si_signo = SIGDATARECV;
+    /*
     if (registered_process != -1) {
         if(send_sig_info(SIGDATARECV, &info, task) < 0) {
             printk(KERN_WARNING "Error sending data receive signal\n");
