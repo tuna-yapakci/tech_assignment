@@ -11,11 +11,12 @@
 #include <asm/uaccess.h>
 #include <linux/ioctl.h>
 #include <linux/pid.h>
+#include <linux/delay.h>
 MODULE_LICENSE("GPL");
 
-#define GPIO_21 (21)
 #define MAGIC 'k'
 #define USER_APP_REG _IOW(MAGIC, 1, int*)
+#define START_COMMS _IO(MAGIC, 2)
 #define SIGDATARECV 47
 
 struct gpio_dev {
@@ -62,6 +63,32 @@ static void signal_to_pid_datarecv(void){ // change type maybe
     }
 }
 
+static void reset() {
+    gpio_direction_output(gpio_pin_number, 0);
+    udelay(500);
+    gpio_direction_input(gpio_pin_number);
+    udelay(500);
+}
+
+/*
+static void send_byte_master(void) {
+
+}
+
+static void read_byte_master(void) {
+
+}
+
+static void master_mode(void) {
+
+}
+
+
+static void slave_mode(void) {
+
+}
+*/
+
 
 static int gpio_pin_number = -1;
 //enables indicating the pin number during initialization
@@ -86,7 +113,7 @@ static void cleanup_func(void){
         cdev_del(&(g_dev.cdev));
     }
     if(gpio_requested) {
-        gpio_free(GPIO_21);
+        gpio_free(gpio_pin_number);
     }
 }
 
@@ -104,14 +131,14 @@ static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, lof
     printk(KERN_INFO "Device read, sending signal");
     signal_to_pid_datarecv();
     /*
-    uint8_t gpio_state = gpio_get_value(GPIO_21);
+    uint8_t gpio_state = gpio_get_value(gpio_pin_number);
     
     count = 1;
     if(copy_to_user(buff, &gpio_state, count) > 0) {
         printk(KERN_WARNING "ERROR");
     }
 
-    printk(KERN_INFO "GPIO_21 state = %d \n", gpio_state);
+    printk(KERN_INFO "gpio_pin_number state = %d \n", gpio_state);
     */
     return 0;
 }
@@ -123,10 +150,10 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
     }
 
     if (rec_buff[0]=='1'){
-        gpio_set_value(GPIO_21, 1);
+        gpio_set_value(gpio_pin_number, 1);
     }
     else if (rec_buff[0]=='0'){
-        gpio_set_value(GPIO_21, 0);
+        gpio_set_value(gpio, 0);
     }
     else {
         printk(KERN_WARNING "ERROR2");
@@ -145,6 +172,19 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
             task = pid_task(find_get_pid(registered_process), PIDTYPE_PID);
             printk(KERN_INFO "Registered pid: %d\n", registered_process);
             return 0;
+        }
+    }
+    if(cmd == START_COMMS) {
+        /*
+        if(comm_role == 0) {
+            master_mode();
+        }
+        else if (comm role == 1) {
+            slave_mode();
+        }
+        */
+        while(1) {
+            reset();
         }
     }
     return 0;
@@ -170,22 +210,22 @@ static int __init gpio_driver_init(void){
         return -1;
     }
 
-    if(gpio_is_valid(GPIO_21) == false){
+    if(gpio_is_valid(gpio_pin_number) == false){
         printk(KERN_WARNING "Invalid GPIO\n");
         cleanup_func();
         return -1;
     }
 
     gpio_requested = 1;
-    if(gpio_request(GPIO_21, "GPIO_21") < 0) {
+    if(gpio_request(gpio_pin_number, "gpio") < 0) { //this may cause a problem
         printk(KERN_WARNING "GPIO request error\n");
         cleanup_func();
         return -1;
     }
 
-    gpio_direction_output(GPIO_21, 0); //TODO change this
+    gpio_direction_input(gpio_pin_number);
 
-    gpio_export(GPIO_21, false);
+    gpio_export(gpio_pin_number, false);
 
     printk("Driver loaded\n");
     return 0;

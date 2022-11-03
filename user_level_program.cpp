@@ -9,6 +9,7 @@
 
 #define MAGIC 'k'
 #define USER_APP_REG _IOW(MAGIC, 1, int*)
+#define START_COMMS _IO(MAGIC, 2)
 #define SIGDATARECV 47
 
 void reader_func() {
@@ -47,7 +48,9 @@ int main() {
         exit(EXIT_FAILURE);
     };
 
-    while(1) {
+    ioctl(file, START_COMMS);
+
+    while(1) {  
         std::cout << "Doing code stuff..." << std::endl;
         sleep(1);
     }
