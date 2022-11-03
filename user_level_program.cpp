@@ -26,6 +26,11 @@ void signal_handler(int sig_num) {
     if(ioctl(file, START_COMMS)){
         std::cout << "Cannot start comms" << std::endl;
     }
+    else{
+        std::cout << "Message sent back!" << std::endl;
+    }
+    close(file);
+    
 }
 
 int main() {
