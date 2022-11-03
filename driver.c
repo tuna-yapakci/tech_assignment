@@ -9,21 +9,27 @@
 #include <linux/cdev.h>
 #include <linux/gpio.h>
 #include <asm/uaccess.h>
+#include <linux/ioctl.h>
 MODULE_LICENSE("GPL");
 
 #define GPIO_21 (21)
+#define MAGIC 'k'
+#define USER_APP_REG _IOW(MAGIC, 0, int)
 
 struct gpio_dev {
     struct cdev cdev;
 };
 
 static dev_t dev = 0;
+static int registered_process; //try pid_t if a problem arises
 struct gpio_dev g_dev;
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp);
 static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp);
 static int gpio_open(struct inode *inode, struct file *file);
 static int gpio_close(struct inode *inode, struct file *file);
+static int gpioctl (struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg);
+
 
 static struct file_operations gpio_fops = {
     .owner = THIS_MODULE,
@@ -31,6 +37,7 @@ static struct file_operations gpio_fops = {
     .release = gpio_close,
     .read = gpio_read,
     .write = gpio_write,
+    .unlocked_ioctl = gpioctl;
 };
 
 
@@ -49,6 +56,10 @@ static int gpio_pin_number = -1;
 //S_IRUGO means the parameter can be read but cannot be changed
 module_param(gpio_pin_number, int, S_IRUGO);
 
+static int comm_role = -1;
+//master == 0, slave == 1;
+module_param(comm_role, int, S_IRUGO);
+
 //cleanup helper variables, useful for error handling
 static int chrdev_allocated = 0;
 static int device_registered = 0; //TODO rename these
@@ -66,8 +77,6 @@ static void cleanup_func(void){
         gpio_free(GPIO_21);
     }
 }
-
-
 
 static int gpio_open(struct inode *inode, struct file *file){
     printk("Device file opened\n");
@@ -108,6 +117,17 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
     }
 
     return count;
+}
+
+static int gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
+    if(cmd == USER_APP_REG) {
+        if(copy_from_user(registered_process, arg, 4) > 0) {
+            printk(KERN_WARNING "Error reading pid");
+        }
+        else{
+            printk(KERN_INFO "Registered pid: %d\n", registered_process);
+        }
+    }
 }
 
 
