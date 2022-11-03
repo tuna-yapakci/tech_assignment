@@ -7,7 +7,7 @@
 #include <sys/ioctl.h>
 
 #define MAGIC 'k'
-#define USER_APP_REG _IOW(MAGIC, 1, int)
+#define USER_APP_REG _IOW(MAGIC, 1, int*)
 
 void reader_func() {
     std::cout << "reader thread initialized" << std:: endl;
@@ -32,7 +32,7 @@ int main() {
     //first register the process to the driver
     pid_t pid = getpid();
     std::cout << "Process ID is " << pid << std::endl;
-    if(ioctl(file, USER_APP_REG, (int) pid)) {
+    if(ioctl(file, USER_APP_REG, (int*) &pid)) {
         std::cout << "Couldn't register to driver" << std::endl;
         close(file);
         exit(EXIT_FAILURE);
