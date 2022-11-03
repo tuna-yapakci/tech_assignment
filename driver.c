@@ -63,7 +63,18 @@ static void signal_to_pid_datarecv(void){ // change type maybe
     }
 }
 
-static void reset() {
+
+static int gpio_pin_number = -1;
+//enables indicating the pin number during initialization
+//S_IRUGO means the parameter can be read but cannot be changed
+module_param(gpio_pin_number, int, S_IRUGO);
+
+static int comm_role = -1;
+//master == 0, slave == 1;
+module_param(comm_role, int, S_IRUGO);
+
+
+static void reset(void) {
     gpio_direction_output(gpio_pin_number, 0);
     udelay(500);
     gpio_direction_input(gpio_pin_number);
@@ -88,16 +99,6 @@ static void slave_mode(void) {
 
 }
 */
-
-
-static int gpio_pin_number = -1;
-//enables indicating the pin number during initialization
-//S_IRUGO means the parameter can be read but cannot be changed
-module_param(gpio_pin_number, int, S_IRUGO);
-
-static int comm_role = -1;
-//master == 0, slave == 1;
-module_param(comm_role, int, S_IRUGO);
 
 //cleanup helper variables, useful for error handling
 static int chrdev_allocated = 0;
@@ -153,7 +154,7 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
         gpio_set_value(gpio_pin_number, 1);
     }
     else if (rec_buff[0]=='0'){
-        gpio_set_value(gpio, 0);
+        gpio_set_value(gpio_pin_number, 0);
     }
     else {
         printk(KERN_WARNING "ERROR2");
