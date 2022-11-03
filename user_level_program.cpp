@@ -16,12 +16,13 @@ void reader_func() {
 int main() {
     //initialize reader thread
     //std::thread reader(reader_func);
-    
+    /*
     char message[10];
     std::cout << "Maximum message length is 10 characters" << std::endl;
     std::cout << "Type your message: " << std::endl;
     fgets(message, 10, stdin);
     std::cout << "Message is " << message << std::endl;
+    */
 
     int file = open("/dev/custom_gpio_dev", O_RDWR);
     if (file < 0) {
@@ -30,6 +31,7 @@ int main() {
 
     //first register the process to the driver
     pid_t pid = getpid();
+    std::cout << "Process ID is " << pid << std::endl;
     if(ioctl(file, USER_APP_REG, (int) pid)) {
         std::cout << "Couldn't register to driver" << std::endl;
         close(file);

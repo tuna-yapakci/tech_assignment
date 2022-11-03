@@ -14,7 +14,7 @@ MODULE_LICENSE("GPL");
 
 #define GPIO_21 (21)
 #define MAGIC 'k'
-#define USER_APP_REG _IOW(MAGIC, 0, int)
+#define USER_APP_REG _IOW(MAGIC, 1, int)
 
 struct gpio_dev {
     struct cdev cdev;
