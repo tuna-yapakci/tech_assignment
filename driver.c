@@ -121,7 +121,7 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
 
 static int gpioctl(struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg){
     if(cmd == USER_APP_REG) {
-        if(copy_from_user(registered_process, arg, 4) > 0) {
+        if(copy_from_user(&registered_process, &arg, 4) > 0) {
             printk(KERN_WARNING "Error reading pid");
         }
         else{
