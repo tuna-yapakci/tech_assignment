@@ -94,8 +94,7 @@ static void cleanup_func(void){
 }
 
 static int gpio_open(struct inode *inode, struct file *file){
-    printk(KERN_INFO "Device opened, sending signal");
-    signal_to_pid_datarecv();
+    printk("Device file opened\n");
     return 0;
 }
 
@@ -105,8 +104,9 @@ static int gpio_close(struct inode *inode, struct file *file){
 }
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp){
-    
-    
+    printk(KERN_INFO "Device read, sending signal");
+    //signal_to_pid_datarecv();
+    /*
     uint8_t gpio_state = gpio_get_value(GPIO_21);
     
     count = 1;
@@ -115,7 +115,7 @@ static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, lof
     }
 
     printk(KERN_INFO "GPIO_21 state = %d \n", gpio_state);
-    
+    */
     return 0;
 }
 static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp){
