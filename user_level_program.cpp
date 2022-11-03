@@ -5,12 +5,18 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <csignal>
 
 #define MAGIC 'k'
 #define USER_APP_REG _IOW(MAGIC, 1, int*)
+#define SIGDATARECV 69
 
 void reader_func() {
     std::cout << "reader thread initialized" << std:: endl;
+}
+
+void signal_handler(int sig_num) {
+    std::cout << "Signal received! " << sig_num << std:: endl;
 }
 
 int main() {
@@ -23,6 +29,9 @@ int main() {
     fgets(message, 10, stdin);
     std::cout << "Message is " << message << std::endl;
     */
+
+    //registering signal
+    signal(SIGDATARECV, signal_handler);
 
     int file = open("/dev/custom_gpio_dev", O_RDWR);
     if (file < 0) {
