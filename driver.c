@@ -28,7 +28,7 @@ static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, lof
 static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp);
 static int gpio_open(struct inode *inode, struct file *file);
 static int gpio_close(struct inode *inode, struct file *file);
-static int gpioctl(struct file *filp, unsigned int cmd, unsigned long arg);
+static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg);
 
 
 static struct file_operations gpio_fops = {
@@ -119,7 +119,7 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
     return count;
 }
 
-static int gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
+static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
     if(cmd == USER_APP_REG) {
         if(copy_from_user(&registered_process, &arg, 4) > 0) {
             printk(KERN_WARNING "Error reading pid");
