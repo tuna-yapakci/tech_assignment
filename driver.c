@@ -76,9 +76,8 @@ module_param(comm_role, int, S_IRUGO);
 
 static void reset(void) {
     gpio_direction_output(gpio_pin_number, 0);
-    udelay(500);
+    sleep(1);
     gpio_direction_input(gpio_pin_number);
-    udelay(500);
 }
 
 /*
@@ -184,9 +183,7 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
             slave_mode();
         }
         */
-        while(1) {
-            reset();
-        }
+        reset();
     }
     return 0;
 }

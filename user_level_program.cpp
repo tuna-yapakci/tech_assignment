@@ -18,6 +18,12 @@ void reader_func() {
 
 void signal_handler(int sig_num) {
     std::cout << "Signal received! " << sig_num << std:: endl;
+
+    int file = open("/dev/custom_gpio_dev", O_RDWR);
+    if (file < 0) {
+        std::cout << "Could't open file " << std::endl;
+    }
+    ioctl(file, START_COMMS);
 }
 
 int main() {
@@ -48,7 +54,6 @@ int main() {
         exit(EXIT_FAILURE);
     };
 
-    ioctl(file, START_COMMS);
 
     while(1) {  
         std::cout << "Doing code stuff..." << std::endl;
