@@ -78,6 +78,7 @@ static void reset(void) {
     gpio_direction_output(gpio_pin_number, 0);
     mdelay(1000);
     gpio_direction_input(gpio_pin_number);
+    printk("Reset func triggered!\n");
 }
 
 /*
