@@ -23,7 +23,9 @@ void signal_handler(int sig_num) {
     if (file < 0) {
         std::cout << "Could't open file " << std::endl;
     }
-    ioctl(file, START_COMMS);
+    if(ioctl(file, START_COMMS)){
+        std::cout << "Cannot start comms" << std::endl;
+    }
 }
 
 int main() {
