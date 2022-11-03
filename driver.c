@@ -65,7 +65,7 @@ static int signal_to_pid_datarecv(void){ // change type maybe
             printk(KERN_WARNING "Error sending data receive signal\n");
         }*/
     }
-    return 0
+    return 0;
 }
 
 
