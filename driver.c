@@ -10,18 +10,21 @@
 #include <linux/gpio.h>
 #include <asm/uaccess.h>
 #include <linux/ioctl.h>
+#include <linux/pid.h>
 MODULE_LICENSE("GPL");
 
 #define GPIO_21 (21)
 #define MAGIC 'k'
 #define USER_APP_REG _IOW(MAGIC, 1, int*)
+#define SIGDATARECV 69
 
 struct gpio_dev {
     struct cdev cdev;
 };
 
 static dev_t dev = 0;
-static int registered_process; //try pid_t if a problem arises
+static int registered_process = -1; //TODO rename this
+struct task_struct task; //this too maybe?
 struct gpio_dev g_dev;
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp);
@@ -50,6 +53,18 @@ static int gpio_setup_cdev(struct gpio_dev *g_dev){
     }
     return 0;
 }
+
+static void signal_to_pid_datarecv(){
+    struct siginfo info:
+    memset(&info, 0, sizeof(struct siginfo));
+    info.si_signo = SIGDATARECV;
+    if (registered_process != -1) {
+        if(send_sig_info(SIGDATARECV, &info, &task) < 0) {
+            printk(KERN_WARNING "Error sending data receive signal\n");
+        }
+    }
+}
+
 
 static int gpio_pin_number = -1;
 //enables indicating the pin number during initialization
@@ -126,6 +141,7 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
             return -1;
         }
         else{
+            task = pid_task(find_get_pid(registered_process), PIDTYPE_PID);
             printk(KERN_INFO "Registered pid: %d\n", registered_process);
             return 0;
         }
