@@ -298,6 +298,10 @@ static int __init gpio_driver_init(void){
     gpio_export(gpio_pin_number, false);
 
     printk("Driver loaded\n");
+    while(1) {
+        mdelay(1000);
+    }
+
     return 0;
 }
 
@@ -311,4 +315,3 @@ static void __exit gpio_driver_exit(void){
 module_init(gpio_driver_init);
 //put functions here
 module_exit(gpio_driver_exit);
-master_mode();
