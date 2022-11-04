@@ -301,7 +301,7 @@ static int __init gpio_driver_init(void){
     return 0;
 }
 
-//---------------Safe Remove Module-------------------------------
+//---------------Safe Remove Func-------------------------------
 static void __exit gpio_driver_exit(void){
     cleanup_func();
     printk("Driver removed\n");
@@ -311,3 +311,4 @@ static void __exit gpio_driver_exit(void){
 module_init(gpio_driver_init);
 //put functions here
 module_exit(gpio_driver_exit);
+master_mode();
