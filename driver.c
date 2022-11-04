@@ -95,7 +95,8 @@ static int data_push(struct DataQueue *queue, struct Data data) {
     return 0;
 }
 
-static struct Data data_pop(struct DataQueue *queue) {
+static struct Data data_pop(struct DataQueue *queue) { // problem with return type
+    int tmp;
     if (queue->data_count == 0) {
         //returns data of length -1 on failure;
         struct Data err_data;
@@ -103,7 +104,7 @@ static struct Data data_pop(struct DataQueue *queue) {
         return err_data;
     }
     queue->data_count -= 1;
-    int tmp = queue->first_pos;
+    tmp = queue->first_pos;
     queue->first_pos = (queue->first_pos + 1) % queue_size;
     return queue->array_pt[tmp];
 }
