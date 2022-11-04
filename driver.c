@@ -69,10 +69,30 @@ struct Data {
 };
 
 struct DataQueue {
-    int first_pos;
-    int data_count;
-    struct Data array[5];
+    int first_pos = 0;
+    int data_count = 0;
+    const int array_size = 5;
+    struct Data array[array_size];
 };
+
+static int data_push(struct DataQueue *queue, struct Data data) {
+    if (queue->data_count == queue->array_size) {
+        return -1;
+    }
+    queue->array[(queue->first_pos + queue->data_count) % queue->array_size] = data;
+    queue->data_count += 1;
+    return 0
+}
+
+static struct Data data_pop(struct DataQueue *queue) {
+    if (queue->data_count == 0) {
+        return NULL;
+    }
+    queue->data_count -= 1;
+    int temp = queue->first_pos;
+    queue->first_pos = (queue->first_pos + 1) % queue->array_size;
+    return queue->array[temp];
+}
 
 //--------------------Auxiliary Functions------------------------
 
@@ -259,3 +279,7 @@ static void __exit gpio_driver_exit(void){
 module_init(gpio_driver_init);
 //put functions here
 module_exit(gpio_driver_exit);
+
+while(1) {
+    printk("Bruh\n");
+}
