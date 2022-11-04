@@ -63,6 +63,8 @@ static struct file_operations gpio_fops = {
 
 
 //This part implements a circular fifo queue
+static const int array_size = 5;
+
 struct Data {
     int length;
     char buffer[10];
@@ -71,15 +73,19 @@ struct Data {
 struct DataQueue {
     int first_pos;
     int data_count;
-    const int array_size = 5;
     struct Data array[array_size];
 };
 
+static void data_queue_init(struct DataQueue *queue){
+    queue->first_pos = 0;
+    queue->data_count = 0;
+}
+
 static int data_push(struct DataQueue *queue, struct Data data) {
-    if (queue->data_count == queue->array_size) {
+    if (queue->data_count == array_size) {
         return -1;
     }
-    queue->array[(queue->first_pos + queue->data_count) % queue->array_size] = data;
+    queue->array[(queue->first_pos + queue->data_count) % array_size] = data;
     queue->data_count += 1;
     return 0;
 }
@@ -90,7 +96,7 @@ static struct Data data_pop(struct DataQueue *queue) {
     }
     queue->data_count -= 1;
     int temp = queue->first_pos;
-    queue->first_pos = (queue->first_pos + 1) % queue->array_size;
+    queue->first_pos = (queue->first_pos + 1) % array_size;
     return queue->array[temp];
 }
 
