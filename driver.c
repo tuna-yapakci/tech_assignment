@@ -76,17 +76,21 @@ struct DataQueue {
     struct Data *array_pt;
 };
 
-static void data_queue_init(struct DataQueue *queue){
+static int data_queue_init(struct DataQueue *queue){
     queue->first_pos = 0;
     queue->data_count = 0;
-    queue->array_pt = kmalloc(sizeof(struct Data)*queue_size);
+    queue->array_pt = kmalloc(sizeof(struct Data)*queue_size, GFP_KERNEL);
+    if(queue->array_pt == NULL) {
+        return -1;
+    }
+    return 0;
 }
 
 static int data_push(struct DataQueue *queue, struct Data data) {
     if (queue->data_count == queue_size) {
         return -1;
     }
-    queue->array[(queue->first_pos + queue->data_count) % queue_size] = data;
+    queue->array_pt[(queue->first_pos + queue->data_count) % queue_size] = data;
     queue->data_count += 1;
     return 0;
 }
@@ -102,7 +106,7 @@ static struct Data data_pop(struct DataQueue *queue) {
     int temp;
     temp = queue->first_pos;
     queue->first_pos = (queue->first_pos + 1) % queue_size;
-    return queue->array[temp];
+    return queue->array_pt[temp];
 }
 
 //--------------------Auxiliary Functions------------------------
