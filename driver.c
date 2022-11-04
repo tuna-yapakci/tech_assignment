@@ -71,7 +71,7 @@ struct Data {
 struct DataQueue {
     int first_pos;
     int data_count;
-    Data array[5];
+    struct Data array[5];
 };
 
 //--------------------Auxiliary Functions------------------------
