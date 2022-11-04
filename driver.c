@@ -69,8 +69,8 @@ struct Data {
 };
 
 struct DataQueue {
-    int first_pos = 0;
-    int data_count = 0;
+    int first_pos;
+    int data_count;
     const int array_size = 5;
     struct Data array[array_size];
 };
