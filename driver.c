@@ -73,12 +73,13 @@ struct Data {
 struct DataQueue {
     int first_pos;
     int data_count;
-    struct Data array[queue_size];
+    struct Data *array_pt;
 };
 
 static void data_queue_init(struct DataQueue *queue){
     queue->first_pos = 0;
     queue->data_count = 0;
+    queue->array_pt = kmalloc(sizeof(struct Data)*queue_size);
 }
 
 static int data_push(struct DataQueue *queue, struct Data data) {
@@ -98,7 +99,8 @@ static struct Data data_pop(struct DataQueue *queue) {
         return err_data;
     }
     queue->data_count -= 1;
-    int temp = queue->first_pos;
+    int temp;
+    temp = queue->first_pos;
     queue->first_pos = (queue->first_pos + 1) % queue_size;
     return queue->array[temp];
 }
@@ -154,12 +156,28 @@ static void read_byte_master(void) {
 */
 
 static void master_mode(void) {
-
+    int read_mode = 0;
+    //reset returns -1 if no presence, 0 if no msg from slave, 1 if 
+    // there is a message from the slave
+    
+    while(1) {
+        int status = reset();
+        if(status = -1) {
+            printk("Slave is not present\n");
+        }
+        else if (status = 0) {
+            //if there is message in queue, send it
+        }
+        else {
+            read_mode = 1; // maybe I don't even need this variable
+        }
+        //maybe wait a while after each reset
+    }
 }
 
 
 static void slave_mode(void) {
-
+    //busy wait until gpio pin lights up?
 }
 
 
@@ -288,7 +306,3 @@ static void __exit gpio_driver_exit(void){
 module_init(gpio_driver_init);
 //put functions here
 module_exit(gpio_driver_exit);
-
-while(1) {
-    printk("Bruh\n");
-}
