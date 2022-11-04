@@ -19,14 +19,28 @@ MODULE_LICENSE("GPL");
 #define START_COMMS _IO(MAGIC, 2)
 #define SIGDATARECV 47
 
-struct gpio_dev {
-    struct cdev cdev;
-};
+//--------------------Variables---------------------------------
 
 static dev_t dev = 0;
 static int registered_process = -1; //TODO rename this
 struct task_struct *task; //this too maybe?
 struct gpio_dev g_dev;
+
+static int gpio_pin_number = -1;
+//enables indicating the pin number during initialization
+//S_IRUGO means the parameter can be read but cannot be changed
+module_param(gpio_pin_number, int, S_IRUGO);
+
+static int comm_role = -1;
+//master == 0, slave == 1;
+module_param(comm_role, int, S_IRUGO);
+
+//cleanup helper variables, useful for error handling
+static int chrdev_allocated = 0;
+static int device_registered = 0; //TODO rename these
+static int gpio_requested = 0;
+
+//--------------------Prototypes and Structs--------------------
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp);
 static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp);
@@ -34,6 +48,9 @@ static int gpio_open(struct inode *inode, struct file *file);
 static int gpio_close(struct inode *inode, struct file *file);
 static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg);
 
+struct gpio_dev {
+    struct cdev cdev;
+};
 
 static struct file_operations gpio_fops = {
     .owner = THIS_MODULE,
@@ -44,6 +61,33 @@ static struct file_operations gpio_fops = {
     .unlocked_ioctl = gpioctl,
 };
 
+
+//This part implements a circular fifo queue
+struct Data {
+    int length;
+    char buffer[10];
+};
+
+struct DataQueue {
+    int first_pos;
+    int data_count;
+    Data array[5];
+};
+
+//--------------------Auxiliary Functions------------------------
+
+//self explanatory
+static void cleanup_func(void){
+    if(chrdev_allocated) {
+        unregister_chrdev_region(dev,1);
+    }
+    if(device_registered) {
+        cdev_del(&(g_dev.cdev));
+    }
+    if(gpio_requested) {
+        gpio_free(gpio_pin_number);
+    }
+}
 
 static int gpio_setup_cdev(struct gpio_dev *g_dev){
     cdev_init(&g_dev->cdev, &gpio_fops);
@@ -63,17 +107,6 @@ static void signal_to_pid_datarecv(void){ // change type maybe
     }
 }
 
-
-static int gpio_pin_number = -1;
-//enables indicating the pin number during initialization
-//S_IRUGO means the parameter can be read but cannot be changed
-module_param(gpio_pin_number, int, S_IRUGO);
-
-static int comm_role = -1;
-//master == 0, slave == 1;
-module_param(comm_role, int, S_IRUGO);
-
-
 static void reset(void) {
     gpio_direction_output(gpio_pin_number, 0);
     mdelay(1000);
@@ -89,6 +122,7 @@ static void send_byte_master(void) {
 static void read_byte_master(void) {
 
 }
+*/
 
 static void master_mode(void) {
 
@@ -98,25 +132,9 @@ static void master_mode(void) {
 static void slave_mode(void) {
 
 }
-*/
 
-//cleanup helper variables, useful for error handling
-static int chrdev_allocated = 0;
-static int device_registered = 0; //TODO rename these
-static int gpio_requested = 0;
 
-//self explanatory
-static void cleanup_func(void){
-    if(chrdev_allocated) {
-        unregister_chrdev_region(dev,1);
-    }
-    if(device_registered) {
-        cdev_del(&(g_dev.cdev));
-    }
-    if(gpio_requested) {
-        gpio_free(gpio_pin_number);
-    }
-}
+//----------------File Operation Functions------------------------
 
 static int gpio_open(struct inode *inode, struct file *file){
     printk("Device file opened\n");
@@ -189,6 +207,7 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
     return 0;
 }
 
+//-----------------Initializer----------------------------------
 
 static int __init gpio_driver_init(void){
     // TODO check if the given number is valid
@@ -230,10 +249,13 @@ static int __init gpio_driver_init(void){
     return 0;
 }
 
+//---------------Safe Remove Module-------------------------------
 static void __exit gpio_driver_exit(void){
     cleanup_func();
     printk("Driver removed\n");
 }
 
+//---------------Main (kind of)---------------------------------------------
 module_init(gpio_driver_init);
+//put functions here
 module_exit(gpio_driver_exit);
