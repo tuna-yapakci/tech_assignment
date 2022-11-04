@@ -103,10 +103,9 @@ static struct Data data_pop(struct DataQueue *queue) {
         return err_data;
     }
     queue->data_count -= 1;
-    int temp;
-    temp = queue->first_pos;
+    int tmp = queue->first_pos;
     queue->first_pos = (queue->first_pos + 1) % queue_size;
-    return queue->array_pt[temp];
+    return queue->array_pt[tmp];
 }
 
 //--------------------Auxiliary Functions------------------------
@@ -142,11 +141,12 @@ static void signal_to_pid_datarecv(void){ // change type maybe
     }
 }
 
-static void reset(void) {
+static int reset(void) {
     gpio_direction_output(gpio_pin_number, 0);
     mdelay(1000);
     gpio_direction_input(gpio_pin_number);
     printk("Reset func triggered!\n");
+    return 0;
 }
 
 /*
@@ -166,10 +166,10 @@ static void master_mode(void) {
     
     while(1) {
         int status = reset();
-        if(status = -1) {
+        if(status == -1) {
             printk("Slave is not present\n");
         }
-        else if (status = 0) {
+        else if (status == 0) {
             //if there is message in queue, send it
         }
         else {
