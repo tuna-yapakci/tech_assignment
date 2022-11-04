@@ -92,7 +92,10 @@ static int data_push(struct DataQueue *queue, struct Data data) {
 
 static struct Data data_pop(struct DataQueue *queue) {
     if (queue->data_count == 0) {
-        return NULL;
+        //returns data of length -1 on failure;
+        struct Data err_data;
+        err_data.length = -1;
+        return err_data;
     }
     queue->data_count -= 1;
     int temp = queue->first_pos;
