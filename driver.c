@@ -95,6 +95,13 @@ static struct Data data_pop(struct DataQueue *queue) { // problem with return ty
     return queue->array_pt[tmp];
 }
 
+//this is for debugging
+static void data_print(struct DataQueue *queue) {
+    for (int i = 0; i < queue->data_count; i++){
+        printk("Data %d: %s\n", i, queue->array_pt[(queue->first_pos + i) % queue_size]);
+    }
+}
+
 //--------------------Variables---------------------------------
 
 static dev_t dev = 0;
@@ -164,7 +171,7 @@ static int reset(void) {
     gpio_direction_output(gpio_pin_number, 0);
     mdelay(1000);
     gpio_direction_input(gpio_pin_number);
-    printk("Reset func triggered!\n");
+    //printk("Reset func triggered!\n");
     return 0;
 }
 
@@ -221,6 +228,7 @@ static int gpio_close(struct inode *inode, struct file *file){
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp){
     printk(KERN_INFO "Device read, sending signal");
     signal_to_pid_datarecv();
+    data_print(&queue_to_send);
     /*
     uint8_t gpio_state = gpio_get_value(gpio_pin_number);
     
@@ -243,7 +251,13 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
         printk(KERN_WARNING "ERROR1");
     }
 
-    printk("Data: %s, size: %d\n", msg, count);
+    //printk("Data: %s, size: %d\n", msg, count);
+    struct Data tmp;
+    for (int i = 0; i < count, i++){
+        tmp.buffer[i] = msg[i];
+    }
+    tmp.length = count;
+    data_push(&queue_to_send, tmp);
 
     return count;
 }
