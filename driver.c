@@ -20,30 +20,7 @@ MODULE_LICENSE("GPL");
 #define START_COMMS _IO(MAGIC, 2)
 #define SIGDATARECV 47
 
-//--------------------Variables---------------------------------
-
-static dev_t dev = 0;
-static int registered_process = -1; //TODO rename this
-struct task_struct *task; //this too maybe?
-struct task_struct *comm_thread;
-struct gpio_dev g_dev;
-
-static int gpio_pin_number = -1;
-//enables indicating the pin number during initialization
-//S_IRUGO means the parameter can be read but cannot be changed
-module_param(gpio_pin_number, int, S_IRUGO);
-
-static int comm_role = 0;
-//master == 0, slave == 1;
-module_param(comm_role, int, S_IRUGO);
-
-//cleanup helper variables, useful for error handling
-static int chrdev_allocated = 0;
-static int device_registered = 0; //TODO rename these
-static int gpio_requested = 0;
-static int kthread_started = 0;
-
-//--------------------Prototypes and Structs--------------------
+//--------------------Prototypes and Structures--------------------
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp);
 static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp);
@@ -89,6 +66,12 @@ static int data_queue_init(struct DataQueue *queue){
     return 0;
 }
 
+static int data_queue_free(struct DataQueue *queue){
+    kfree(queue->array_pt);
+    printk(KERN_INFO "Queue pointer freed\n");
+    return 0;
+}
+
 static int data_push(struct DataQueue *queue, struct Data data) {
     if (queue->data_count == queue_size) {
         return -1;
@@ -112,6 +95,32 @@ static struct Data data_pop(struct DataQueue *queue) { // problem with return ty
     return queue->array_pt[tmp];
 }
 
+//--------------------Variables---------------------------------
+
+static dev_t dev = 0;
+static int registered_process = -1; //TODO rename this
+struct task_struct *task; //this too maybe?
+struct task_struct *comm_thread;
+struct gpio_dev g_dev;
+struct DataQueue queue_to_send;
+//struct DataQueue queue_received;
+
+static int gpio_pin_number = -1;
+//enables indicating the pin number during initialization
+//S_IRUGO means the parameter can be read but cannot be changed
+module_param(gpio_pin_number, int, S_IRUGO);
+
+static int comm_role = 0;
+//master == 0, slave == 1;
+module_param(comm_role, int, S_IRUGO);
+
+//cleanup helper variables, useful for error handling
+static int chrdev_allocated = 0;
+static int device_registered = 0; //TODO rename these
+static int gpio_requested = 0;
+static int kthread_started = 0;
+static int queue_kmalloc = 0;
+
 //--------------------Auxiliary Functions------------------------
 
 //self explanatory
@@ -127,6 +136,9 @@ static void cleanup_func(void){
     }
     if(kthread_started) {
         kthread_stop(comm_thread);
+    }
+    if(queue_kmalloc) {
+        data_queue_free(&queue_to_send);
     }
 }
 
@@ -188,7 +200,6 @@ static int master_mode(void *p) {
     return 0;
 }
 
-
 static int slave_mode(void *p) {
     //busy wait until gpio pin lights up?
     return 0;
@@ -223,21 +234,16 @@ static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, lof
     return 0;
 }
 static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp){
-    uint8_t rec_buff[10] = {0};
-
-    if(copy_from_user(rec_buff, buff, count) > 0) {
+    char msg[10];
+    if(count > 10) {
+        printk("Data too big");
+        return -1;
+    }
+    if(copy_from_user(msg, buff, count) > 0) {
         printk(KERN_WARNING "ERROR1");
     }
 
-    if (rec_buff[0]=='1'){
-        gpio_set_value(gpio_pin_number, 1);
-    }
-    else if (rec_buff[0]=='0'){
-        gpio_set_value(gpio_pin_number, 0);
-    }
-    else {
-        printk(KERN_WARNING "ERROR2");
-    }
+    printk("Data: %s, size: %d\n", msg, count);
 
     return count;
 }
@@ -302,7 +308,15 @@ static int __init gpio_driver_init(void){
         return -1;
     }
     gpio_direction_input(gpio_pin_number);
-    gpio_export(gpio_pin_number, false);
+    gpio_export(gpio_pin_number, false); //what does this do?
+
+    
+    if(data_queue_init(&queue_to_send) < 0){
+        printk(KERN_WARNING "kmalloc failed\n");
+        cleanup_func();
+        return -1;
+    }
+    queue_kmalloc = 1;
 
     kthread_started = 1;
     if(comm_role == 0) {
