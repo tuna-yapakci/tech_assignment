@@ -236,7 +236,7 @@ static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, lof
 static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp){
     char msg[10];
     if(count > 10) {
-        printk("Data too big");
+        printk("Data too big\n");
         return -1;
     }
     if(copy_from_user(msg, buff, count) > 0) {
