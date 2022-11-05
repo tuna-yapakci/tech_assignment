@@ -166,13 +166,13 @@ static void read_byte_master(void) {
 }
 */
 
-static void master_mode(void) {
+static int master_mode(void *p) {
     int read_mode = 0;
     printk("Kernel thread working!\n");
     //reset returns -1 if no presence, 0 if no msg from slave, 1 if 
     // there is a message from the slave
     
-    while(1) {
+    while(!kthread_should_stop()) {
         int status = reset();
         if(status == -1) {
             printk("Slave is not present\n");
@@ -188,7 +188,7 @@ static void master_mode(void) {
 }
 
 
-static void slave_mode(void) {
+static int slave_mode(void *p) {
     //busy wait until gpio pin lights up?
 }
 
@@ -307,7 +307,7 @@ static int __init gpio_driver_init(void){
         comm_thread = kthread_run(master_mode, NULL, "master_thread");
         //failure case?
     }
-    else if(comm_role = 1) {
+    else if(comm_role == 1) {
         comm_thread = kthread_run(slave_mode, NULL, "slave_thread");
     }
 
