@@ -9,7 +9,6 @@
 
 #define MAGIC 'k'
 #define USER_APP_REG _IOW(MAGIC, 1, int*)
-#define START_COMMS _IO(MAGIC, 2)
 #define SIGDATARECV 47
 
 void reader_func() {
@@ -22,9 +21,6 @@ void signal_handler(int sig_num) {
     int file = open("/dev/custom_gpio_dev", O_RDWR);
     if (file < 0) {
         std::cout << "Could't open file " << std::endl;
-    }
-    if(ioctl(file, START_COMMS)){
-        std::cout << "Cannot start comms" << std::endl;
     }
     else{
         std::cout << "Message sent back!" << std::endl;
