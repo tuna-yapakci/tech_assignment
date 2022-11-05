@@ -185,11 +185,13 @@ static int master_mode(void *p) {
         }
         //maybe wait a while after each reset
     }
+    return 0;
 }
 
 
 static int slave_mode(void *p) {
     //busy wait until gpio pin lights up?
+    return 0;
 }
 
 
