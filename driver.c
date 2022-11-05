@@ -97,7 +97,8 @@ static struct Data data_pop(struct DataQueue *queue) { // problem with return ty
 
 //this is for debugging
 static void data_print(struct DataQueue *queue) {
-    for (int i = 0; i < queue->data_count; i++){
+    int i = 0;
+    for (i; i < queue->data_count; i++){
         printk("Data %d: %s\n", i, (queue->array_pt[(queue->first_pos + i) % queue_size]).buffer);
     }
 }
@@ -244,6 +245,7 @@ static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, lof
 static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp){
     char msg[10];
     struct Data tmp;
+    int i = 0;
 
     if(count > 10) {
         printk("Data too big\n");
@@ -254,7 +256,7 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
     }
 
     //printk("Data: %s, size: %d\n", msg, count);
-    for (int i = 0; i < count; i++){
+    for (i; i < count; i++){
         tmp.buffer[i] = msg[i];
     }
     tmp.length = count;
