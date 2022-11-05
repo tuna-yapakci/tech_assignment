@@ -12,6 +12,7 @@
 #include <linux/ioctl.h>
 #include <linux/pid.h>
 #include <linux/delay.h>
+#include <linux/kthread.h>
 MODULE_LICENSE("GPL");
 
 #define MAGIC 'k'
@@ -24,6 +25,7 @@ MODULE_LICENSE("GPL");
 static dev_t dev = 0;
 static int registered_process = -1; //TODO rename this
 struct task_struct *task; //this too maybe?
+struct task_struct *comm_thread;
 struct gpio_dev g_dev;
 
 static int gpio_pin_number = -1;
@@ -31,7 +33,7 @@ static int gpio_pin_number = -1;
 //S_IRUGO means the parameter can be read but cannot be changed
 module_param(gpio_pin_number, int, S_IRUGO);
 
-static int comm_role = -1;
+static int comm_role = 0;
 //master == 0, slave == 1;
 module_param(comm_role, int, S_IRUGO);
 
@@ -39,6 +41,7 @@ module_param(comm_role, int, S_IRUGO);
 static int chrdev_allocated = 0;
 static int device_registered = 0; //TODO rename these
 static int gpio_requested = 0;
+static int kthread_started = 0;
 
 //--------------------Prototypes and Structs--------------------
 
@@ -99,7 +102,7 @@ static struct Data data_pop(struct DataQueue *queue) { // problem with return ty
     int tmp;
     if (queue->data_count == 0) {
         //returns data of length -1 on failure;
-        struct Data err_data;
+        struct Data err_data; //this is a local variable
         err_data.length = -1;
         return err_data;
     }
@@ -121,6 +124,9 @@ static void cleanup_func(void){
     }
     if(gpio_requested) {
         gpio_free(gpio_pin_number);
+    }
+    if(kthread_started) {
+        kthread_stop(comm_thread);
     }
 }
 
@@ -162,6 +168,7 @@ static void read_byte_master(void) {
 
 static void master_mode(void) {
     int read_mode = 0;
+    printk("Kernel thread working!\n");
     //reset returns -1 if no presence, 0 if no msg from slave, 1 if 
     // there is a message from the slave
     
@@ -292,15 +299,19 @@ static int __init gpio_driver_init(void){
         cleanup_func();
         return -1;
     }
-
     gpio_direction_input(gpio_pin_number);
-
     gpio_export(gpio_pin_number, false);
 
-    printk("Driver loaded\n");
-    while(1) {
-        mdelay(1000);
+    kthread_started = 1;
+    if(comm_role == 0) {
+        comm_thread = kthread_run(master_mode, NULL, "master_thread");
+        //failure case?
     }
+    else if(comm_role = 1) {
+        comm_thread = kthread_run(slave_mode, NULL, "slave_thread");
+    }
+
+    printk("Driver loaded\n");
 
     return 0;
 }

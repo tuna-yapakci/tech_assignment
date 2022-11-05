@@ -3,7 +3,7 @@ module="driver"
 device="custom_gpio_dev"
 mode="664"
 
-/sbin/insmod ${module}.ko gpio_pin_number=22 || exit 1
+/sbin/insmod ${module}.ko gpio_pin_number=22 comm_role=0 || exit 1
 
 
 rm -f /dev/${device}
