@@ -39,11 +39,10 @@ int send_message(std::string *msg, int is_command){
 
     if(is_command) {
         char message[msg->length() + 1];
-        std::cout << "bruh" << std::endl;
         message[0] = 0xBB;
         for (unsigned int i = 1; i < msg->length() + 1; i += 1) {
             std::cout << "bruh2" << std::endl;
-            message[i] = msg->at(i);
+            message[i] = msg->at(i-1);
         }
         std::cout << "bruh3" << std::endl;
         if(write(file, message, msg->length() + 1) < 0) {
@@ -107,7 +106,9 @@ int main() {
                 if(send_message(&msg, 0) < 0){
                     std::cout << "Error sending message (queue might be full)" << std::endl;
                 }
-                std::cout << "Message sent, length = " << msg.length() << std::endl;
+                else {
+                    std::cout << "Message sent, length = " << msg.length() << std::endl;
+                }
             }
         }
         else if (mode.length() == 1 && mode[0] == 'c') {
@@ -122,7 +123,9 @@ int main() {
                 if(send_message(&msg, 1) < 0) {
                     std::cout << "Error sending command (queue might be full)" << std::endl;
                 }
-                std::cout << "Command issued, length = " << msg.length() << std::endl;
+                else {
+                    std::cout << "Command issued, length = " << msg.length() << std::endl;
+                }
             }
         }
         else {
