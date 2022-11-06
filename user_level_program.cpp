@@ -76,10 +76,10 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if(argv[0][0] == '0') { //this just checks the first char of the argument
+    if(argv[1][0] == '0') { //this just checks the first char of the argument
         dev_file = MASTERNAME;
     }
-    else if(argv[0][0] == '1') {
+    else if(argv[1][0] == '1') {
         dev_file = SLAVENAME;
     }
     else {
