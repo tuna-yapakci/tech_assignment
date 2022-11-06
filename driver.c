@@ -17,6 +17,7 @@ MODULE_LICENSE("GPL");
 
 #define MAGIC 'k'
 #define USER_APP_REG _IOW(MAGIC, 1, int*)
+#define USER_APP_UNREG _IO(MAGIC, 2)
 #define SIGDATARECV 47
 
 //--------------------Prototypes and Structures--------------------
@@ -307,14 +308,37 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
 
 static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
     if(cmd == USER_APP_REG) {
+        if (registered_process >= 0) {
+            printk(KERN_WARNING "User app already registered\n");
+            return -1;
+        }
         if(copy_from_user(&registered_process, (int*) arg, 4) > 0) {
-            printk(KERN_WARNING "Error reading pid");
+            printk(KERN_WARNING "Error reading pid\n");
             return -1;
         }
         else{
             task = pid_task(find_get_pid(registered_process), PIDTYPE_PID);
             printk(KERN_INFO "Registered pid: %d\n", registered_process);
+
+            kthread_started = 1;
+            if(comm_role == 0) {
+                comm_thread = kthread_run(master_mode, NULL, "master_thread");
+                //failure case?
+            }
+            else if(comm_role == 1) {
+                comm_thread = kthread_run(slave_mode, NULL, "slave_thread");
+            }
             return 0;
+        }
+    }
+    if(cmd == USER_APP_UNREG) {
+        if (registered_process < 0) {
+            printk(KERN_WARNING "No app is registered\n");
+        }
+        else {
+            registered_process = -1;
+            kthread_stop(comm_thread);
+            kthread_started = 0;
         }
     }
     return 0;
@@ -362,15 +386,6 @@ static int __init gpio_driver_init(void){
         return -1;
     }
     queue_kmalloc = 1;
-
-    kthread_started = 1;
-    if(comm_role == 0) {
-        comm_thread = kthread_run(master_mode, NULL, "master_thread");
-        //failure case?
-    }
-    else if(comm_role == 1) {
-        comm_thread = kthread_run(slave_mode, NULL, "slave_thread");
-    }
 
     printk("Driver loaded\n");
 
