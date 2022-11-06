@@ -13,7 +13,8 @@ all:
 	g++ -Wall -o user_app user_level_program.cpp
 	rm *.mod*
 	rm *.o
-	rm *.cmd
+	rm .*.cmd
+	rm *odule*
 
 clean:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
