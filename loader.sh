@@ -4,11 +4,6 @@ module2="driver2"
 device="gpio_master"
 device2="gpio_slave"
 
-mkdir master
-mkdir slave
-
-make
-
 /sbin/insmod master/${module}.ko gpio_pin_number=22 comm_role=0 || exit 1
 /sbin/insmod slave/${module2}.ko gpio_pin_number=17 comm_role=1 || exit 1
 

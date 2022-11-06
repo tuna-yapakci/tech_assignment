@@ -1,22 +1,12 @@
-#ifneq ($(KERNELRELEASE),)
-#	obj-m := driver.o
-
-#else
-#	KERNELDIR ?= /lib/modules/$(shell uname -r)/build
-#	PWD := $(shell pwd)
-
-#default:
-#	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
-#	g++ -Wall -o user_app user_level_program.cpp
-
-#endif
+obj-m += driver.o
+obj-m += driver2.o
 
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
 
 all:
-	obj-m := driver.o
-	$(MAKE) -C $(KERNELDIR) M=$(PWD)/master modules
-	obj-m := driver2.o
-	$(MAKE) -C $(KERNELDIR) M=$(PWD)/slave modules
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
 	g++ -Wall -o user_app user_level_program.cpp
+
+clean:
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
