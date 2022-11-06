@@ -1,4 +1,5 @@
 $(shell cp driver.c driver2.c)
+$(shell chmod +x loader.sh)
 
 obj-m += driver.o
 obj-m += driver2.o
