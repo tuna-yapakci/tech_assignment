@@ -94,7 +94,7 @@ int main() {
         std::cin >> mode;
         if(mode.length() == 1 && mode[0] == 'm') {
             std::cout << "Maximum message length is " << MAX_NUM_BYTES_IN_A_MESSAGE << std::endl;
-            std::cout << "Enter your message: " << std::endl;
+            std::cout << "Enter your message: ";
             getline(std::cin, msg);
             if (msg.length() == 0 || msg.length() > MAX_NUM_BYTES_IN_A_MESSAGE) {
                 std::cout << "Invalid message length" << std::endl;
@@ -103,12 +103,12 @@ int main() {
                 if(send_message(&msg, 0) < 0){
                     std::cout << "Error sending message (queue might be full)" << std::endl;
                 }
-                std::cout << "Message sent" << std::endl;
+                std::cout << "Message sent, length = " << msg.length() << std::endl;
             }
         }
         else if (mode.length() == 1 && mode[0] == 'c') {
             std::cout << "Maximum command length is " << (MAX_NUM_BYTES_IN_A_MESSAGE - 1) << std::endl;
-            std::cout << "Enter your command: " << std::endl;
+            std::cout << "Enter your command: ";
             getline(std::cin, msg);
             if (msg.length() == 0 || msg.length() > (MAX_NUM_BYTES_IN_A_MESSAGE - 1)) {
                 std::cout << "Invalid command length" << std::endl;
@@ -117,7 +117,7 @@ int main() {
                 if(send_message(&msg, 1) < 0) {
                     std::cout << "Error sending command (queue might be full)" << std::endl;
                 }
-                std::cout << "Command issued" << std::endl;
+                std::cout << "Command issued, length = " << msg.length() << std::endl;
             }
         }
         else {

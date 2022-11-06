@@ -339,6 +339,7 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
             registered_process = -1;
             kthread_stop(comm_thread);
             kthread_started = 0;
+            printk(KERN_INFO "User app unregistered\n");
         }
     }
     return 0;
