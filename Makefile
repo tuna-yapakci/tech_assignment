@@ -1,11 +1,11 @@
+KERNELDIR ?= /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+
 $(shell cp driver.c driver2.c)
 $(shell chmod +x loader.sh)
 
 obj-m += driver.o
 obj-m += driver2.o
-
-KERNELDIR ?= /lib/modules/$(shell uname -r)/build
-PWD := $(shell pwd)
 
 all:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules

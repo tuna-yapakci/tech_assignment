@@ -19,6 +19,8 @@ MODULE_LICENSE("GPL");
 #define USER_APP_REG _IOW(MAGIC, 1, int*)
 #define USER_APP_UNREG _IO(MAGIC, 2)
 #define SIGDATARECV 47
+#define MASTERNAME "gpio_master"
+#define SLAVENAME "gpio_slave"
 
 //--------------------Prototypes and Structures--------------------
 
@@ -361,9 +363,16 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
 
 static int __init gpio_driver_init(void){
     printk("The chosen pin is %d\n", gpio_pin_number);
+    char name;
+    if(comm_role == 0) {
+        name = MASTERNAME;
+    }
+    else if (comm_role == 1) {
+        name = SLAVENAME
+    }
     
     chrdev_allocated = 1;
-    if(alloc_chrdev_region(&dev, 0, 1, "custom_gpio_dev") < 0) {
+    if(alloc_chrdev_region(&dev, 0, 1, name) < 0) {
         printk(KERN_WARNING "Error during dev number allocation\n");
         cleanup_func();
         return -1;
@@ -384,7 +393,7 @@ static int __init gpio_driver_init(void){
     }
 
     gpio_requested = 1;
-    if(gpio_request(gpio_pin_number, "gpio") < 0) { //the label should be different for master and slave (when running on same computer?)
+    if(gpio_request(gpio_pin_number, name) < 0) { //the label should be different for master and slave (when running on same computer?)
         printk(KERN_WARNING "GPIO request error\n");
         cleanup_func();
         return -1;
