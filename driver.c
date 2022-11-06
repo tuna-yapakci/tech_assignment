@@ -299,7 +299,7 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
         tmp.buffer[i] = msg[i];
     }
     tmp.length = count;
-    printk("%s\n", tmp.buffer);
+    printk("%d\n", queue_to_send->data_count);
     if (data_push(&queue_to_send, tmp) < 0) {
         printk(KERN_WARNING "Queue is full, write failed\n");
         return -1;
