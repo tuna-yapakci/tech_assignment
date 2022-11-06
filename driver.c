@@ -265,13 +265,14 @@ static int slave_mode(void *p) {
 
 //----------------File Operation Functions------------------------
 
+//There is nothing specific we do when the dev file gets opened or closed
 static int gpio_open(struct inode *inode, struct file *file){
-    printk("Device file opened\n");
+    //printk("Device file opened\n");
     return 0;
 }
 
 static int gpio_close(struct inode *inode, struct file *file){
-    printk("Device file closed\n");
+    //printk("Device file closed\n");
     return 0;
 }
 
