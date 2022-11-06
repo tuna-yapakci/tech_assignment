@@ -84,6 +84,7 @@ int main(int argc, char *argv[]) {
     }
     else {
         std::cout << "Invalid mode entered" << std::endl;
+        exit(EXIT_FAILURE);
     }
 
     //registering signal
