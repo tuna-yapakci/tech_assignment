@@ -182,7 +182,7 @@ static void read_byte(void){
 }
 
 static void read_message(void){
-
+    read_byte();
 }
 
 static void send_byte(char byte) {
@@ -223,13 +223,13 @@ static int master_mode(void *p) {
             //if there is message in queue, send it
             if (queue_to_send.data_count > 0) {
                 struct Data dt;
+                int i;
                 data_pop(&queue_to_send, &dt); //this doesn't fail unless the queue is empty
                 
                 //calculate checksum
                 //send header
                 send_byte((char) 0xAA);
                 //send message length
-                int i;
                 for (i = 0; i < dt.length; i += 1) {
                     //send byte from message
                 }
