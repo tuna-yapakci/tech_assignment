@@ -98,6 +98,7 @@ static int data_pop(struct DataQueue *queue, struct Data *data_to_copy) { // pro
 //this is for debugging
 static void data_print(struct DataQueue *queue) {
     int i;
+    printk("Printing data\n");
     for (i = 0; i < queue->data_count; i += 1){
         printk("Data %d: %s", i, (queue->array_pt[(queue->first_pos + i) % queue_size]).buffer);
     }
