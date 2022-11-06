@@ -1,4 +1,4 @@
-cp driver.c driver2.c
+$(shell cp driver.c driver2.c)
 
 obj-m += driver.o
 obj-m += driver2.o
