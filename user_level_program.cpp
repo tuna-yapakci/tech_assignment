@@ -110,7 +110,7 @@ int main() {
             std::cout << "Maximum command length is " << (MAX_NUM_BYTES_IN_A_MESSAGE - 1) << " bytes" << std::endl;
             std::cout << "Enter your command: " << std::endl;
             getline(std::cin, msg);
-            if (msg.length() == 0 || msg.length() > (MAX_NUM_BYTES_IN_A_MESSAGE - 1)) {
+            if (msg.length() > (MAX_NUM_BYTES_IN_A_MESSAGE - 1)) {
                 std::cout << "Invalid command length (" << msg.length() << ")" << std::endl;
             }
             else {
@@ -121,7 +121,7 @@ int main() {
             }
         }
         else {
-            std::cout << "Invalid mode" << std::endl;
+            std::cout << "Invalid mode, enter either \"m\" or \"c\"" << std::endl;
         }
     }
 
