@@ -40,7 +40,7 @@ int send_message(std::string *msg, int is_command){
     if(is_command) {
         char message[msg->length() + 1];
         message[0] = 0xBB;
-        for (int i = 1; i < msg->length() + 1; i += 1) {
+        for (unsigned int i = 1; i < msg->length() + 1; i += 1) {
             message[i] = msg->at(i);
         }
         if(write(file, message, msg->length() + 1) < 0) {
@@ -49,7 +49,7 @@ int send_message(std::string *msg, int is_command){
     }
     else {
         char message[msg->length()];
-        for (int i = 0; i < msg->length(); i += 1) {
+        for (unsigned int i = 0; i < msg->length(); i += 1) {
             message[i] = msg->at(i);
         }
         if(write(file, message, msg->length())) {
