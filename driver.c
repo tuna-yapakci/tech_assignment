@@ -82,7 +82,6 @@ static int data_push(struct DataQueue *queue, struct Data data) {
 }
 
 static int data_pop(struct DataQueue *queue, struct Data *data_to_copy) { // problem with return type
-    int tmp;
     int i;
     if (queue->data_count == 0) {
         return -1;
@@ -178,11 +177,11 @@ static int reset(void) {
     return 0;
 }
 
-static void read_byte(){
+static void read_byte(void){
 
 }
 
-static void read_message(){
+static void read_message(void){
 
 }
 
@@ -212,7 +211,7 @@ static int master_mode(void *p) {
     printk("Kernel thread working!\n");
     while((registered_process == -1) && (!kthread_should_stop())) {
         //User app is not working, happy busy waiting!
-        sleep(1);
+        mdelay(1000);
     }
 
     while(!kthread_should_stop()) {
@@ -230,7 +229,8 @@ static int master_mode(void *p) {
                 //send header
                 send_byte((char) 0xAA);
                 //send message length
-                for (int i = 0; i < dt.length; i += 1) {
+                int i;
+                for (i = 0; i < dt.length; i += 1) {
                     //send byte from message
                 }
                 //send checksum
