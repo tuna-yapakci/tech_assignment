@@ -41,10 +41,8 @@ int send_message(std::string *msg, int is_command){
         char message[msg->length() + 1];
         message[0] = 0xBB;
         for (unsigned int i = 1; i < msg->length() + 1; i += 1) {
-            std::cout << "bruh2" << std::endl;
             message[i] = msg->at(i-1);
         }
-        std::cout << "bruh3" << std::endl;
         if(write(file, message, msg->length() + 1) < 0) {
             return -1;
         }
