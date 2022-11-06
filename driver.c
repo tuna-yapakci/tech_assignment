@@ -175,7 +175,7 @@ static int reset(void) {
     gpio_direction_output(gpio_pin_number, 0);
     mdelay(1000);
     gpio_direction_input(gpio_pin_number);
-    return 0;
+    return -1;
 }
 
 static void read_byte(void){
