@@ -11,10 +11,14 @@
 #define USER_APP_UNREG _IO(MAGIC, 2)
 #define SIGDATARECV 47
 #define MAX_NUM_BYTES_IN_A_MESSAGE 10
+#define MASTERNAME "/dev/gpio_master"
+#define SLAVENAME "/dev/gpio_slave"
+
+static const char* dev_file;
 
 void signal_handler(int sig_num) {
     std::cout << "Signal received: " << sig_num << std:: endl;
-    int file = open("/dev/custom_gpio_dev", O_RDWR);
+    int file = open(dev_file, O_RDWR);
     if (file < 0) {
         std::cout << "Could't open file" << std::endl;
         return;
@@ -31,7 +35,7 @@ void signal_handler(int sig_num) {
 }
 
 int send_message(std::string *msg, int is_command){
-    int file = open("/dev/custom_gpio_dev", O_RDWR);
+    int file = open(dev_file, O_RDWR);
     if (file < 0) {
         std::cout << "Could't open file " << std::endl;
         return -1;
@@ -63,12 +67,30 @@ int send_message(std::string *msg, int is_command){
     return 0;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+
+    if(argc != 2) {
+        std::cout << "Usage: ./user_app [driver_mode]" << std::endl;
+        std::cout << "driver_mode is 0 for master, 1 for slave" << std::endl;
+        std::cout << "(This is needed as we simulate both devices in the same computer)" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    if(argv[0][0] == '0') { //this just checks the first char of the argument
+        dev_file = MASTERNAME;
+    }
+    else if(argv[0][0] == '1') {
+        dev_file = SLAVENAME;
+    }
+    else {
+        std::cout << "Invalid mode entered" << std::endl;
+    }
+
     //registering signal
     signal(SIGDATARECV, signal_handler);
     signal(SIGINT, signal_handler);
 
-    int file = open("/dev/custom_gpio_dev", O_RDWR);
+    int file = open(dev_file, O_RDWR);
     if (file < 0) {
         std::cout << "Could't open file " << std::endl;
     }
