@@ -44,6 +44,7 @@ int send_message(std::string *msg, int is_command){
             message[i] = msg->at(i-1);
         }
         if(write(file, message, msg->length() + 1) < 0) {
+            close(file);
             return -1;
         }
     }
@@ -52,7 +53,8 @@ int send_message(std::string *msg, int is_command){
         for (unsigned int i = 0; i < msg->length(); i += 1) {
             message[i] = msg->at(i);
         }
-        if(write(file, message, msg->length())) {
+        if(write(file, message, msg->length()) < 0) {
+            close(file);
             return -1;
         }
     }
