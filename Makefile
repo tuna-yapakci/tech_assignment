@@ -7,6 +7,6 @@ else
 
 default:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
-	g++ -o user_app user_level_program.cpp
+	g++ -Wall -o user_app user_level_program.cpp
 
 endif
