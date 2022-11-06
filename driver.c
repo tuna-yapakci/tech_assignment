@@ -368,7 +368,7 @@ static int __init gpio_driver_init(void){
         name = MASTERNAME;
     }
     else if (comm_role == 1) {
-        name = SLAVENAME
+        name = SLAVENAME;
     }
     
     chrdev_allocated = 1;
