@@ -93,11 +93,11 @@ int main() {
         std::cout << "Enter \"m\" to send a message, \"c\" to send a command:" << std::endl;
         std::cin >> mode;
         if(mode.length() == 1 && mode[0] == 'm') {
-            std::cout << "Maximum message length is " << MAX_NUM_BYTES_IN_A_MESSAGE << std::endl;
-            std::cout << "Enter your message: ";
+            std::cout << "Maximum message length is " << MAX_NUM_BYTES_IN_A_MESSAGE << " bytes" << std::endl;
+            std::cout << "Enter your message: " << std::endl;
             getline(std::cin, msg);
             if (msg.length() == 0 || msg.length() > MAX_NUM_BYTES_IN_A_MESSAGE) {
-                std::cout << "Invalid message length" << std::endl;
+                std::cout << "Invalid message length (" << msg.length() << ")" << std::endl;
             }
             else {
                 if(send_message(&msg, 0) < 0){
@@ -107,11 +107,11 @@ int main() {
             }
         }
         else if (mode.length() == 1 && mode[0] == 'c') {
-            std::cout << "Maximum command length is " << (MAX_NUM_BYTES_IN_A_MESSAGE - 1) << std::endl;
-            std::cout << "Enter your command: ";
+            std::cout << "Maximum command length is " << (MAX_NUM_BYTES_IN_A_MESSAGE - 1) << " bytes" << std::endl;
+            std::cout << "Enter your command: " << std::endl;
             getline(std::cin, msg);
             if (msg.length() == 0 || msg.length() > (MAX_NUM_BYTES_IN_A_MESSAGE - 1)) {
-                std::cout << "Invalid command length" << std::endl;
+                std::cout << "Invalid command length (" << msg.length() << ")" << std::endl;
             }
             else {
                 if(send_message(&msg, 1) < 0) {
