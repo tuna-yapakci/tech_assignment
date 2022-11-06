@@ -363,7 +363,7 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
 
 static int __init gpio_driver_init(void){
     printk("The chosen pin is %d\n", gpio_pin_number);
-    char name;
+    char* name;
     if(comm_role == 0) {
         name = MASTERNAME;
     }
