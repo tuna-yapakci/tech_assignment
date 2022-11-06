@@ -173,8 +173,17 @@ static int reset(void) {
     //reset returns -1 if no presence, 0 if no msg from slave, 1 if 
     // there is a message from the slave
     gpio_direction_output(gpio_pin_number, 0);
-    mdelay(1000);
+    udelay(500);
     gpio_direction_input(gpio_pin_number);
+    udelay(100);
+    if(gpio_get_value(gpio_pin_number) == 0){
+        //slave present, check if it has data to send
+        udelay(200); //correct timings
+        if(gpio_get_value(gpio_pin_number) == 0) {
+            return 1;
+        }
+        return 0;
+    }
     return -1;
 }
 
