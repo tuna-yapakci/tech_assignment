@@ -70,7 +70,7 @@ static int data_queue_init(struct DataQueue *queue){
 
 static int data_queue_free(struct DataQueue *queue){
     kfree(queue->array_pt);
-    printk(KERN_INFO "Queue pointer freed\n");
+    //printk(KERN_INFO "Queue pointer freed\n");
     return 0;
 }
 
@@ -83,7 +83,8 @@ static int data_push(struct DataQueue *queue, struct Data data) {
     return 0;
 }
 
-static int data_pop(struct DataQueue *queue, struct Data *data_to_copy) { // problem with return type
+//this function copies first element and removes it from the queue
+static int data_pop(struct DataQueue *queue, struct Data *data_to_copy) {
     int i;
     if (queue->data_count == 0) {
         return -1;
@@ -94,6 +95,19 @@ static int data_pop(struct DataQueue *queue, struct Data *data_to_copy) { // pro
         data_to_copy->buffer[i] = queue->array_pt[queue->first_pos].buffer[i];
     }
     queue->first_pos = (queue->first_pos + 1) % queue_size;
+    return 0;
+}
+
+//this function just copies the first element
+static int data_read_top(struct DataQueue *queue, struct Data *data_to_copy) {
+    int i;
+    if (queue->data_count == 0) {
+        return -1;
+    }
+    data_to_copy->length = (queue->array_pt[queue->first_pos]).length;
+    for (i = 0; i < data_to_copy->length; i += 1){
+        data_to_copy->buffer[i] = queue->array_pt[queue->first_pos].buffer[i];
+    }
     return 0;
 }
 
@@ -109,8 +123,8 @@ static void data_print(struct DataQueue *queue) {
 //--------------------Variables---------------------------------
 
 static dev_t dev = 0;
-static int registered_process = -1; //TODO rename this
-struct task_struct *task; //this too maybe?
+static int registered_process = -1;
+struct task_struct *task;
 struct task_struct *comm_thread;
 struct gpio_dev g_dev;
 struct DataQueue queue_to_send;
@@ -129,6 +143,7 @@ module_param(comm_role, int, S_IRUGO);
 static int chrdev_allocated = 0;
 static int device_registered = 0;
 static int gpio_requested = 0;
+static int gpio_exported = 0;
 static int kthread_started = 0;
 static int queue_kmalloc = 0;
 
@@ -136,21 +151,25 @@ static int queue_kmalloc = 0;
 
 //self explanatory
 static void cleanup_func(void){
-    if(chrdev_allocated) {
-        unregister_chrdev_region(dev,1);
-    }
-    if(device_registered) {
-        cdev_del(&(g_dev.cdev));
-    }
-    if(gpio_requested) {
-        gpio_free(gpio_pin_number);
+    if(queue_kmalloc) {
+        data_queue_free(&queue_to_send);
     }
     if(kthread_started) {
         kthread_stop(comm_thread);
     }
-    if(queue_kmalloc) {
-        data_queue_free(&queue_to_send);
+    if(gpio_exported) {
+        gpio_unexport(gpio_pin_number);
     }
+    if(gpio_requested) {
+        gpio_free(gpio_pin_number);
+    }
+    if(device_registered) {
+        cdev_del(&(g_dev.cdev));
+    }
+    if(chrdev_allocated) {
+        unregister_chrdev_region(dev,1);
+    }
+    
 }
 
 static int gpio_setup_cdev(struct gpio_dev *g_dev){
@@ -189,12 +208,22 @@ static int reset(void) {
     return -1;
 }
 
+static void send_response(void){
+
+}
+
 static void read_byte(void){
 
 }
 
 static void read_message(void){
     read_byte();
+    //between each bit start a timeout (or transmission ended) timer
+    //when transmission ends check data integrity (length and checksum)
+    //if correct, check if command
+    //if command respond
+    //if no command send ack
+    //if corruption, send fail, listen again
 }
 
 static void send_byte(char byte) {
@@ -219,8 +248,31 @@ static void send_byte(char byte) {
     }
 }
 
+static void send_message() {
+    struct Data dt;
+    int i;
+    data_read_top(&queue_to_send, &dt); //this doesn't fail unless the queue is empty (we always check before calling send_message())
+                
+    //calculate checksum
+    char checksum = dt.buffer[0];
+    for (i = 1; i < 8; i += 1) {
+        checksum = checksum ^ dt.buffer[i];
+    }
+    send_byte((char) 0xAA); //send header
+    send_byte((char) dt.length); //send message length
+    for (i = 0; i < dt.length; i += 1) {
+        send_byte(dt.buffer[i]); //send message
+    }
+    send_byte(checksum);//send checksum
+    udelay(10000);
+    //if command get response, send ack
+    //else read ack, if ok, data_pop
+    //if ack_fail, reset
+    //if no response after udelay, reset
+}
+
 static int master_mode(void *p) {
-    printk("Kernel thread working!\n");
+    printk("Kernel thread for master started!\n");
     while((registered_process == -1) && (!kthread_should_stop())) {
         //User app is not working, happy busy waiting!
         mdelay(1000);
@@ -234,33 +286,47 @@ static int master_mode(void *p) {
         else if (status == 0) {
             //if there is message in queue, send it
             if (queue_to_send.data_count > 0) {
-                struct Data dt;
-                int i;
-                data_pop(&queue_to_send, &dt); //this doesn't fail unless the queue is empty
-                
-                //calculate checksum
-                //send header
-                send_byte((char) 0xAA);
-                //send message length
-                for (i = 0; i < dt.length; i += 1) {
-                    //send byte from message
-                }
-                //send checksum
-
-                //wait response
-                //send ack
+                send_message();
             }
         }
         else {
             read_message();
         }
-        //maybe wait a while after each reset
+        udelay(1000);
     }
     return 0;
 }
 
 static int slave_mode(void *p) {
-    //busy wait until gpio pin lights up?
+    printk("Kernel thread for slave started!\n");
+    
+    while(!kthread_should_stop()) {
+        int send_mode = (queue_to_send.data_count > 0);
+        while(gpio_get_value(gpio_pin_number) == 1){
+            //wait until there is a reset signal
+            //busy waits, implement irq?
+        }
+        udelay(300);
+        if(gpio_get_value(gpio_pin_number) == 1){
+            continue;
+        }
+        udelay(240);
+        gpio_direction_output(gpio_pin_number, 0);
+        udelay(100);
+        gpio_direction_input(gpio_pin_number);
+        if(send_mode) {
+            udelay(50);
+            gpio_direction_output(gpio_pin_number, 0);
+            udelay(100);
+            gpio_direction_input(gpio_pin_number);
+            udelay(150);
+            send_message();
+        }
+        else{
+            udelay(300);
+            read_message();
+        }
+    }
     return 0;
 }
 
@@ -282,16 +348,6 @@ static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, lof
     printk(KERN_INFO "Device read, sending signal");
     signal_to_pid_datarecv();
     data_print(&queue_to_send);
-    /*
-    uint8_t gpio_state = gpio_get_value(gpio_pin_number);
-    
-    count = 1;
-    if(copy_to_user(buff, &gpio_state, count) > 0) {
-        printk(KERN_WARNING "ERROR");
-    }
-
-    printk(KERN_INFO "gpio_pin_number state = %d \n", gpio_state);
-    */
     return 0;
 }
 static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp){
@@ -363,14 +419,13 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
 
 static int __init gpio_driver_init(void){
     char* name;
-    printk("The chosen pin is %d\n", gpio_pin_number);
-    
     if(comm_role == 0) {
         name = MASTERNAME;
     }
     else if (comm_role == 1) {
         name = SLAVENAME;
     }
+    printk("%s pin is %d\n", name, gpio_pin_number);
     
     chrdev_allocated = 1;
     if(alloc_chrdev_region(&dev, 0, 1, name) < 0) {
@@ -378,8 +433,8 @@ static int __init gpio_driver_init(void){
         cleanup_func();
         return -1;
     }
-    printk(KERN_INFO "major number = %d, minor number = %d\n", MAJOR(dev), MINOR(dev));
-    
+    //printk(KERN_INFO "major number = %d, minor number = %d\n", MAJOR(dev), MINOR(dev));
+
     device_registered = 1;
     if(gpio_setup_cdev(&g_dev) < 0){
         printk(KERN_WARNING "Error adding device\n");
@@ -394,13 +449,15 @@ static int __init gpio_driver_init(void){
     }
 
     gpio_requested = 1;
-    if(gpio_request(gpio_pin_number, name) < 0) { //the label should be different for master and slave (when running on same computer?)
+    if(gpio_request(gpio_pin_number, name) < 0) {
         printk(KERN_WARNING "GPIO request error\n");
         cleanup_func();
         return -1;
     }
     gpio_direction_input(gpio_pin_number);
-    gpio_export(gpio_pin_number, false); //what does this do?
+
+    gpio_exported = 1;
+    gpio_export(gpio_pin_number, false); //not sure if this is relevant
 
     
     if(data_queue_init(&queue_to_send) < 0){

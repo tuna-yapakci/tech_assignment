@@ -105,13 +105,6 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     };
 
-    /*
-    while(1) {  
-        std::cout << "Doing code stuff..." << std::endl;
-        sleep(1);
-    }
-    */
-
     while(1) {
         std::string mode;
         std::string msg;
@@ -158,5 +151,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
-// also send a signal to the driver for when the app is closed.
