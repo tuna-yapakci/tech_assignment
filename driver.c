@@ -15,6 +15,7 @@
 #include <linux/kthread.h>
 #include <linux/mutex.h>
 #include <linux/interrupt.h>
+#include <asm/irq.h>
 MODULE_LICENSE("GPL");
 
 #define MAGIC 'k'
@@ -180,7 +181,7 @@ static void cleanup_func(void){
 static irqreturn_t irq_handler(int irq, void *dev_id) {
     //make kthread wake up from sleep
     wake_up_process(comm_thread);
-    printk("irq works\n");
+    disable_irq(irq_num);
     return IRQ_HANDLED;
 }
 
