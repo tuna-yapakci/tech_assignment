@@ -251,13 +251,14 @@ static void send_byte(char byte) {
     }
 }
 
-static void send_message() {
+static void send_message(void) {
     struct Data dt;
     int i;
+    char checksum;
     data_read_top(&queue_to_send, &dt); //this doesn't fail unless the queue is empty (we always check before calling send_message())
                 
     //calculate checksum
-    char checksum = dt.buffer[0];
+    checksum = dt.buffer[0];
     for (i = 1; i < 8; i += 1) {
         checksum = checksum ^ dt.buffer[i];
     }
