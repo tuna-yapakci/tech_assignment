@@ -283,12 +283,6 @@ static void read_message(void){
 
     if(is_corrupted) {
         //send 0x00
-        mdelay(15);
-        gpio_direction_output(gpio_pin_number, 0);
-        udelay(200);
-        gpio_direction_input(gpio_pin_number);
-        udelay(20);
-        send_byte(0x00);
         
     }
     else {
@@ -300,12 +294,6 @@ static void read_message(void){
         //prev_data_not_read = 1;
         mutex_unlock(&mtx1);
         //send 0x0F
-        mdelay(15);
-        gpio_direction_output(gpio_pin_number, 0);
-        udelay(200);
-        gpio_direction_input(gpio_pin_number);
-        udelay(20);
-        send_byte(0x0F);
 
         signal_to_pid_datarecv();
     }
@@ -365,14 +353,7 @@ static void send_message(void) {
             //wait until there is a reset signal
             //busy waits, implement irq?
         }
-    udelay(220);
-    ack = read_byte();
-    if(ack == 0x0F) {
-        data_pop(&queue_to_send, &dt);
-    }
-    else {
-        //failure to deliver
-    }
+
     //------before this-------
     //if command get response, send ack
     //else read ack, if ok, data_pop
