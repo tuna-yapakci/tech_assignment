@@ -180,7 +180,8 @@ static void cleanup_func(void){
 
 static irqreturn_t irq_handler(int irq, void *dev_id) {
     //make kthread wake up from sleep
-    wake_up_process(comm_thread);
+    unsigned long flags;
+    local_irq_save(flags);
     disable_irq(irq_num);
     return IRQ_HANDLED;
 }
@@ -600,12 +601,11 @@ static int __init gpio_driver_init(void){
 
     irq_num = gpio_to_irq(gpio_pin_number);
 
-    if(request_irq(irq_num, (void*) irq_handler, IRQF_TRIGGER_LOW, name, NULL)) {
+    if(request_irq(irq_num, (void*) irq_handler, IRQF_TRIGGER_FALLING, name, NULL)) {
         printk(KERN_WARNING "request_irq failed\n");
         cleanup_func();
         return -1;
     }
-    disable_irq(irq_num);
 
     printk("Driver loaded\n");
 
