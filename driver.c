@@ -251,7 +251,7 @@ static void read_message(void){
 
     for (i = 0; i < 13; i += 1){
         message[i] = read_byte();
-        printk("%c\n",message[i]);
+        //printk("%c\n",message[i]);
     }
 
     if(message[0] != 0xAA) {
@@ -259,6 +259,7 @@ static void read_message(void){
     }
 
     msg_length = (int) message[1];
+    printk("%d\n",msg_length);
     if((msg_length < 0) || (msg_length > 10)) {
         is_corrupted = 1;
     }
