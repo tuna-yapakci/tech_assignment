@@ -159,7 +159,7 @@ static int irq_requested = 0;
 //self explanatory
 static void cleanup_func(void){
     if(irq_requested) {
-        free_irq(irq_num);
+        free_irq(irq_num, NULL);
     }
     if(queue_kmalloc) {
         data_queue_free(&queue_to_send);
