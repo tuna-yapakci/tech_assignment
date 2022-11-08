@@ -220,10 +220,15 @@ static int reset(void) {
     udelay(300);
     return -1;
 }
-
+/*
 static void send_response(void){
 
 }
+*/
+static char read_byte(void);
+static void read_message(void);
+static void send_message(void);
+static void send_byte(char byte);
 
 static char read_byte(void){
     char byte = 0x00;
