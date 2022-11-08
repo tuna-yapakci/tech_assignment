@@ -239,11 +239,11 @@ static char read_byte(void){
         byte = byte | (b[i] << i);
     }
     
-    return byte
+    return byte;
 }
 
 static void read_message(void){
-    char message[13]
+    char message[13];
     int i;
     int msg_length;
     char checksum;
@@ -279,7 +279,7 @@ static void read_message(void){
         mutex_lock(&mtx1);
         received_data.length = msg_length;
         for (i = 0; i < msg_length; i += 1) {
-            received_data[i] = message[2 + i];
+            received_data.buffer[i] = message[2 + i];
         }
         prev_data_not_read = 1;
         mutex_unlock(&mtx1);
@@ -355,13 +355,14 @@ static int master_mode(void *p) {
     }
 
     while(!kthread_should_stop()) {
+        int status;
         mutex_lock(&mtx1);
         if(prev_data_not_read) {
             mutex_unlock(&mtx1);
             continue;
         }
         mutex_unlock(&mtx1);
-        int status = reset();
+        status = reset();
         if(status == -1) {
             printk("Slave is not present\n");
         }
@@ -385,11 +386,14 @@ static int slave_mode(void *p) {
     printk("Kernel thread for slave started!\n");
     
     while(!kthread_should_stop()) {
+        int send_mode;
+        mutex_lock(&mtx1);
         if(prev_data_not_read) {
-            mdelay(10);
+            mutex_unlock(&mtx1);
             continue;
         }
-        int send_mode = (queue_to_send.data_count > 0);
+        mutex_unlock(&mtx1);
+        send_mode = (queue_to_send.data_count > 0);
         while(gpio_get_value(gpio_pin_number) == 1 && (!kthread_should_stop())){
             //wait until there is a reset signal
             //busy waits, implement irq?
@@ -514,8 +518,8 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
 //-----------------Initializer----------------------------------
 
 static int __init gpio_driver_init(void){
-    mutex_init(&mtx1);
     char* name;
+    mutex_init(&mtx1);
     if(comm_role == 0) {
         name = MASTERNAME;
     }
