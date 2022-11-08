@@ -255,14 +255,12 @@ static void read_message(void){
     }
 
     if(message[0] != 0xAA) {
-        printk("Header wrong\n");
         is_corrupted = 1;
     }
 
     msg_length = (int) message[1];
 
     if((msg_length < 0) || (msg_length > 10)) {
-        printk("Length wrong\n");
         is_corrupted = 1;
     }
     else {
@@ -271,7 +269,6 @@ static void read_message(void){
             checksum = checksum ^ message[i];
         }
         if(checksum != message[2 + msg_length]) {
-            printk("Checksum wrong\n");
             is_corrupted = 1;
         }
     }
