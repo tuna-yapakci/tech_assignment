@@ -14,7 +14,7 @@
 #include <linux/delay.h>
 #include <linux/kthread.h>
 #include <linux/mutex.h>
-#include <linux/irq.h>
+#include <linux/interrupt.h>
 MODULE_LICENSE("GPL");
 
 #define MAGIC 'k'
