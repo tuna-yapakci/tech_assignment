@@ -49,7 +49,7 @@ static struct file_operations gpio_fops = {
 static const int queue_size = 5;
 
 struct Data {
-    int length;
+    uint8_t length;
     char buffer[10];
 };
 
@@ -514,6 +514,8 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
             registered_process = -1;
             kthread_stop(comm_thread);
             kthread_started = 0;
+            queue_to_send.data_count = 0;
+            queue_to_send.first_pos = 0;
             printk(KERN_INFO "User app unregistered\n");
         }
     }
