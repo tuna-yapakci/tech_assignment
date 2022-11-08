@@ -271,7 +271,7 @@ static void read_message(void){
             checksum = checksum ^ message[i];
         }
         if(checksum != message[1 + msg_length]) {
-            printk("Checksum wrong\n")
+            printk("Checksum wrong\n");
             is_corrupted = 1;
         }
     }
