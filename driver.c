@@ -13,6 +13,7 @@
 #include <linux/pid.h>
 #include <linux/delay.h>
 #include <linux/kthread.h>
+#include <linux/mutex.h>
 MODULE_LICENSE("GPL");
 
 #define MAGIC 'k'
@@ -128,7 +129,9 @@ struct task_struct *task;
 struct task_struct *comm_thread;
 struct gpio_dev g_dev;
 struct DataQueue queue_to_send;
-//struct DataQueue queue_received;
+struct Data received_data;
+static int prev_data_not_read = 0;
+struct mutex mtx1;
 
 //enables indicating the pin number during initialization
 //S_IRUGO means the parameter can be read but cannot be changed
@@ -222,12 +225,68 @@ static void send_response(void){
 
 }
 
-static void read_byte(void){
+static char read_byte(void){
+    char byte = 0x00;
+    int b[8];
+    int i;
+    for(i = 0; i < 8; i += 1){
+        udelay(40);
+        b[i] = gpio_get_value(gpio_pin_number); //timings
+        udelay(30);
+    }
 
+    for(i = 0; i < 8; i += 1){
+        byte = byte | (b[i] << i);
+    }
+    
+    return byte
 }
 
 static void read_message(void){
-    read_byte();
+    char message[13]
+    int i;
+    int msg_length;
+    char checksum;
+    int is_corrupted = 0;
+
+    for (i = 0; i < 13; i += 1){
+        message[i] = read_byte();
+    }
+
+    if(message[0] != 0xAA) {
+        is_corrupted = 1;
+    }
+
+    msg_length = (int) message[1];
+    if((msg_length < 0) || (msg_length > 10)) {
+        is_corrupted = 1;
+    }
+    else {
+        checksum = message[0];
+        for (i = 1; i < msg_length + 2; i += 1) {
+            checksum = checksum ^ message[i];
+        }
+        if(checksum != message[1 + msg_length]) {
+            is_corrupted = 1;
+        }
+    }
+
+    if(is_corrupted) {
+        //send 0x00
+        
+    }
+    else {
+        mutex_lock(&mtx1);
+        received_data.length = msg_length;
+        for (i = 0; i < msg_length; i += 1) {
+            received_data[i] = message[2 + i];
+        }
+        prev_data_not_read = 1;
+        mutex_unlock(&mtx1);
+        //send 0x0F
+        signal_to_pid_datarecv();
+    }
+    
     //between each bit start a timeout (or transmission ended) timer
     //when transmission ends check data integrity (length and checksum)
     //if correct, check if command
@@ -263,24 +322,29 @@ static void send_message(void) {
     struct Data dt;
     int i;
     char checksum;
+    char ack;
     data_read_top(&queue_to_send, &dt); //this doesn't fail unless the queue is empty (we always check before calling send_message())
                 
     //calculate checksum
-    checksum = dt.buffer[0];
-    for (i = 1; i < 8; i += 1) {
+    checksum = 0xAA ^ ((char) dt.length);
+    for (i = 0; i < dt.length; i += 1) {
         checksum = checksum ^ dt.buffer[i];
     }
-    send_byte((char) 0xAA); //send header
-    send_byte((char) dt.length); //send message length
+    send_byte((char) 0xAA);
+    send_byte((char) dt.length);
     for (i = 0; i < dt.length; i += 1) {
-        send_byte(dt.buffer[i]); //send message
+        send_byte(dt.buffer[i]);
     }
-    send_byte(checksum);//send checksum
+    send_byte(checksum);
     mdelay(10);
+    //------before this-------
     //if command get response, send ack
     //else read ack, if ok, data_pop
     //if ack_fail, reset
     //if no response after udelay, reset
+    //-------------------------
+    //read ack, if fail, reset
+    //else data_pop
 }
 
 static int master_mode(void *p) {
@@ -291,6 +355,12 @@ static int master_mode(void *p) {
     }
 
     while(!kthread_should_stop()) {
+        mutex_lock(&mtx1);
+        if(prev_data_not_read) {
+            mutex_unlock(&mtx1);
+            continue;
+        }
+        mutex_unlock(&mtx1);
         int status = reset();
         if(status == -1) {
             printk("Slave is not present\n");
@@ -304,7 +374,7 @@ static int master_mode(void *p) {
         }
         else {
             printk("Slave has a message\n");
-            //read_message();
+            read_message();
         }
         udelay(1000);
     }
@@ -315,8 +385,12 @@ static int slave_mode(void *p) {
     printk("Kernel thread for slave started!\n");
     
     while(!kthread_should_stop()) {
+        if(prev_data_not_read) {
+            mdelay(10);
+            continue;
+        }
         int send_mode = (queue_to_send.data_count > 0);
-        while(gpio_get_value(gpio_pin_number) == 1){
+        while(gpio_get_value(gpio_pin_number) == 1 && (!kthread_should_stop())){
             //wait until there is a reset signal
             //busy waits, implement irq?
         }
@@ -339,11 +413,11 @@ static int slave_mode(void *p) {
             udelay(100);
             gpio_direction_input(gpio_pin_number);
             udelay(100);
-            //send_message();
+            send_message();
         }
         else{
             udelay(250);
-            //read_message();
+            read_message();
         }
     }
     return 0;
@@ -364,9 +438,12 @@ static int gpio_close(struct inode *inode, struct file *file){
 }
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp){
-    printk(KERN_INFO "Device read, sending signal");
-    signal_to_pid_datarecv();
-    data_print(&queue_to_send);
+    mutex_lock(&mtx1);
+    if(copy_to_user(buff, received_data.buffer, received_data.length) > 0){
+        return -1;
+    }
+    prev_data_not_read = 0;
+    mutex_unlock(&mtx1);
     return 0;
 }
 static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp){
@@ -437,6 +514,7 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
 //-----------------Initializer----------------------------------
 
 static int __init gpio_driver_init(void){
+    mutex_init(&mtx1);
     char* name;
     if(comm_role == 0) {
         name = MASTERNAME;
