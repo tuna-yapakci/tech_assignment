@@ -194,8 +194,15 @@ static int reset(void) {
     //reset returns -1 if no presence, 0 if no msg from slave, 1 if 
     // there is a message from the slave
     gpio_direction_output(gpio_pin_number, 0);
-    udelay(500);
-    gpio_direction_input(gpio_pin_number);
+    if(queue_to_send.data_count > 0) {
+        udelay(300);
+        gpio_direction_input(gpio_pin_number);
+        udelay(200);
+    }
+    else{
+        udelay(500);
+        gpio_direction_input(gpio_pin_number);
+    }
     udelay(100);
     if(gpio_get_value(gpio_pin_number) == 0){
         //slave present, check if it has data to send
@@ -249,6 +256,7 @@ static void send_byte(char byte) {
             udelay(55);
         }   
     }
+    udelay(750);
 }
 
 static void send_message(void) {
@@ -312,11 +320,16 @@ static int slave_mode(void *p) {
             //wait until there is a reset signal
             //busy waits, implement irq?
         }
-        udelay(300);
+        udelay(200);
         if(gpio_get_value(gpio_pin_number) == 1){
             continue;
         }
-        udelay(250);
+        udelay(200);
+        if(gpio_get_value(gpio_pin_number) == 1){
+            printk("Master have message to send\n");
+        }
+
+        udelay(150);
         gpio_direction_output(gpio_pin_number, 0);
         udelay(100);
         gpio_direction_input(gpio_pin_number);
