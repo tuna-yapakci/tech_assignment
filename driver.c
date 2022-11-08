@@ -268,7 +268,7 @@ static void send_message(void) {
         send_byte(dt.buffer[i]); //send message
     }
     send_byte(checksum);//send checksum
-    udelay(10000);
+    mdelay(10);
     //if command get response, send ack
     //else read ack, if ok, data_pop
     //if ack_fail, reset
