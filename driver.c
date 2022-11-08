@@ -333,6 +333,7 @@ static void send_message(void) {
     send_byte((char) 0xAA);
     send_byte((char) dt.length);
     for (i = 0; i < dt.length; i += 1) {
+        printk("%c\n",dt.buffer[i]);
         send_byte(dt.buffer[i]);
     }
     send_byte(checksum);
