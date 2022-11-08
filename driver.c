@@ -251,7 +251,7 @@ static char read_byte(void){
     int b[8];
     int i;
     for(i = 0; i < 8; i += 1){
-        enable_irq();
+        enable_irq(irq_num);
         wait_event_interruptible(wq, 1);
         udelay(80);
         b[i] = gpio_get_value(gpio_pin_number);
@@ -425,7 +425,7 @@ static int slave_mode(void *p) {
         }
         mutex_unlock(&mtx1);
         send_mode = (queue_to_send.data_count > 0);
-        enable_irq();
+        enable_irq(irq_num);
         wait_event_interruptible(wq, 1);
         udelay(200);
         if(gpio_get_value(gpio_pin_number) == 1){
