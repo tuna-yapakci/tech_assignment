@@ -16,6 +16,7 @@
 #include <linux/mutex.h>
 #include <linux/interrupt.h>
 #include <asm/irq.h>
+#include <linux/wait.h>
 MODULE_LICENSE("GPL");
 
 #define MAGIC 'k'
@@ -135,6 +136,7 @@ struct Data received_data;
 static int prev_data_not_read = 0;
 struct mutex mtx1;
 unsigned int irq_num;
+wait_queue_head_t wq;
 
 //enables indicating the pin number during initialization
 //S_IRUGO means the parameter can be read but cannot be changed
@@ -184,7 +186,8 @@ static void cleanup_func(void){
 
 static irqreturn_t irq_handler(int irq, void *dev_id, struct pt_regs *regs) {
     //make kthread wake up from sleep
-    printk("irq triggered\n");
+    disable_irq(irq_num);
+    wake_up_interruptible(&wq);
     return IRQ_HANDLED;
 }
 
@@ -248,9 +251,8 @@ static char read_byte(void){
     int b[8];
     int i;
     for(i = 0; i < 8; i += 1){
-        while(gpio_get_value(gpio_pin_number) == 1 && (!kthread_should_stop())) {
-            //busy wait :(
-        }
+        enable_irq();
+        wait_event_interruptible(wq, 1);
         udelay(80);
         b[i] = gpio_get_value(gpio_pin_number);
         udelay(85);
@@ -423,10 +425,8 @@ static int slave_mode(void *p) {
         }
         mutex_unlock(&mtx1);
         send_mode = (queue_to_send.data_count > 0);
-        while(gpio_get_value(gpio_pin_number) == 1 && (!kthread_should_stop())){
-            //wait until there is a reset signal
-            //busy waits, implement irq?
-        }
+        enable_irq();
+        wait_event_interruptible(wq, 1);
         udelay(200);
         if(gpio_get_value(gpio_pin_number) == 1){
             continue;
@@ -604,11 +604,13 @@ static int __init gpio_driver_init(void){
     irq_num = gpio_to_irq(gpio_pin_number);
 
     irq_requested = 1;
-    if(request_irq(irq_num, (void*) irq_handler, IRQF_TRIGGER_FALLING, "custom_gpio_driver", task)) {
+    if(request_irq(irq_num, (void*) irq_handler, IRQF_TRIGGER_LOW, "custom_gpio_driver", task)) {
         printk(KERN_WARNING "request_irq failed\n");
         cleanup_func();
         return -1;
     }
+
+    init_waitqueue_head(&wq);
 
     printk("Driver loaded\n");
 
