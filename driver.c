@@ -600,11 +600,12 @@ static int __init gpio_driver_init(void){
 
     irq_num = gpio_to_irq(gpio_pin_number);
 
-    if(request_irq(irq_num, irq_handler, IRQF_TRIGGER_LOW, name, NULL)) {
+    if(request_irq(irq_num, (void*) irq_handler, IRQF_TRIGGER_LOW, name, NULL)) {
         printk(KERN_WARNING "request_irq failed\n");
         cleanup_func();
         return -1;
     }
+    disable_irq(irq_num);
 
     printk("Driver loaded\n");
 
