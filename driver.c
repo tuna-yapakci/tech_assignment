@@ -377,7 +377,7 @@ static int master_mode(void *p) {
             printk("Slave has a message\n");
             read_message();
         }
-        udelay(1000);
+        mdelay(1000);
     }
     return 0;
 }
