@@ -199,12 +199,15 @@ static int reset(void) {
     udelay(100);
     if(gpio_get_value(gpio_pin_number) == 0){
         //slave present, check if it has data to send
-        udelay(200); //correct timings
+        udelay(150); //correct timings
         if(gpio_get_value(gpio_pin_number) == 0) {
+            udelay(150);
             return 1;
         }
+        udelay(150);
         return 0;
     }
+    udelay(300);
     return -1;
 }
 
@@ -285,12 +288,14 @@ static int master_mode(void *p) {
         }
         else if (status == 0) {
             //if there is message in queue, send it
+            printk("Slave has no message\n");
             if (queue_to_send.data_count > 0) {
                 send_message();
             }
         }
         else {
-            read_message();
+            printk("Slave has a message\n");
+            //read_message();
         }
         udelay(1000);
     }
@@ -310,7 +315,7 @@ static int slave_mode(void *p) {
         if(gpio_get_value(gpio_pin_number) == 1){
             continue;
         }
-        udelay(240);
+        udelay(250);
         gpio_direction_output(gpio_pin_number, 0);
         udelay(100);
         gpio_direction_input(gpio_pin_number);
@@ -319,12 +324,12 @@ static int slave_mode(void *p) {
             gpio_direction_output(gpio_pin_number, 0);
             udelay(100);
             gpio_direction_input(gpio_pin_number);
-            udelay(150);
-            send_message();
+            udelay(100);
+            //send_message();
         }
         else{
-            udelay(300);
-            read_message();
+            udelay(250);
+            //read_message();
         }
     }
     return 0;
@@ -433,7 +438,6 @@ static int __init gpio_driver_init(void){
         cleanup_func();
         return -1;
     }
-    //printk(KERN_INFO "major number = %d, minor number = %d\n", MAJOR(dev), MINOR(dev));
 
     device_registered = 1;
     if(gpio_setup_cdev(&g_dev) < 0){
