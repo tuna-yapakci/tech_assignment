@@ -14,6 +14,7 @@
 #include <linux/delay.h>
 #include <linux/kthread.h>
 #include <linux/mutex.h>
+#include <linux/irq.h>
 MODULE_LICENSE("GPL");
 
 #define MAGIC 'k'
@@ -132,6 +133,7 @@ struct DataQueue queue_to_send;
 struct Data received_data;
 static int prev_data_not_read = 0;
 struct mutex mtx1;
+unsigned int irq_num;
 
 //enables indicating the pin number during initialization
 //S_IRUGO means the parameter can be read but cannot be changed
@@ -173,6 +175,13 @@ static void cleanup_func(void){
         unregister_chrdev_region(dev,1);
     }
     
+}
+
+static irqreturn_t irq_handler(int irq, void *dev_id) {
+    //make kthread wake up from sleep
+    wake_up_process(comm_thread);
+    printk("irq works\n");
+    return IRQ_HANDLED;
 }
 
 static int gpio_setup_cdev(struct gpio_dev *g_dev){
@@ -587,6 +596,14 @@ static int __init gpio_driver_init(void){
         return -1;
     }
     queue_kmalloc = 1;
+
+    irq_num = gpio_to_irq(gpio_pin_number);
+
+    if(request_irq(irq_num, irq_handler, IRQF_TRIGGER_LOW, name, NULL)) {
+        printk(KERN_WARNING "request_irq failed\n");
+        cleanup_func();
+        return -1;
+    }
 
     printk("Driver loaded\n");
 
