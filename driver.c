@@ -238,7 +238,7 @@ static char read_byte(void){
     for(i = 0; i < 8; i += 1){
         byte = byte | (b[i] << i);
     }
-    
+    udelay(750);
     return byte;
 }
 
