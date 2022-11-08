@@ -331,7 +331,7 @@ static void send_message(void) {
     data_read_top(&queue_to_send, &dt); //this doesn't fail unless the queue is empty (we always check before calling send_message())
                 
     //calculate checksum
-    checksum = 0xAA ^ ((char) dt.length);
+    checksum = 0xAA ^ (dt.length);
     for (i = 0; i < dt.length; i += 1) {
         checksum = checksum ^ dt.buffer[i];
     }
