@@ -187,6 +187,7 @@ static irqreturn_t irq_handler(int irq, void *dev_id) {
     unsigned long flags;
     local_irq_save(flags);
     disable_irq(irq_num);
+    printk("irq triggered\n");
     return IRQ_HANDLED;
 }
 
