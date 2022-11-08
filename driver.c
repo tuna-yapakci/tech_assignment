@@ -388,6 +388,7 @@ static int slave_mode(void *p) {
     
     while(!kthread_should_stop()) {
         int send_mode;
+        int read_mode = 0;
         mutex_lock(&mtx1);
         if(prev_data_not_read) {
             mutex_unlock(&mtx1);
@@ -405,9 +406,9 @@ static int slave_mode(void *p) {
         }
         udelay(200);
         if(gpio_get_value(gpio_pin_number) == 1){
+            read_mode = 1;
             printk("Master have message to send\n");
         }
-
         udelay(150);
         gpio_direction_output(gpio_pin_number, 0);
         udelay(100);
@@ -420,9 +421,12 @@ static int slave_mode(void *p) {
             udelay(100);
             send_message();
         }
-        else{
+        else if(read_mode){
             udelay(250);
             read_message();
+        }
+        else {
+            udelay(250);
         }
     }
     return 0;
