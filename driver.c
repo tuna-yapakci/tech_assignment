@@ -286,7 +286,7 @@ static void read_message(void){
         for (i = 0; i < msg_length; i += 1) {
             received_data.buffer[i] = message[2 + i];
         }
-        prev_data_not_read = 1;
+        //prev_data_not_read = 1;
         mutex_unlock(&mtx1);
         //send 0x0F
         signal_to_pid_datarecv();
