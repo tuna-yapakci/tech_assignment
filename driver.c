@@ -152,11 +152,15 @@ static int gpio_requested = 0;
 static int gpio_exported = 0;
 static int kthread_started = 0;
 static int queue_kmalloc = 0;
+static int irq_requested = 0;
 
 //--------------------Auxiliary Functions------------------------
 
 //self explanatory
 static void cleanup_func(void){
+    if(irq_requested) {
+        free_irq(irq_num);
+    }
     if(queue_kmalloc) {
         data_queue_free(&queue_to_send);
     }
@@ -601,6 +605,7 @@ static int __init gpio_driver_init(void){
 
     irq_num = gpio_to_irq(gpio_pin_number);
 
+    irq_requested = 1;
     if(request_irq(irq_num, (void*) irq_handler, IRQF_TRIGGER_LOW, name, NULL)) {
         printk(KERN_WARNING "request_irq failed\n");
         cleanup_func();
