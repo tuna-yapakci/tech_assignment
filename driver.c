@@ -235,9 +235,9 @@ static char read_byte(void){
     int b[8];
     int i;
     for(i = 0; i < 8; i += 1){
-        udelay(100);
+        udelay(250);
         b[i] = gpio_get_value(gpio_pin_number); //timings
-        udelay(100);
+        udelay(250);
     }
 
     for(i = 0; i < 8; i += 1){
@@ -324,15 +324,15 @@ static void send_byte(char byte) {
     for(i = 0; i < 8; i += 1) {
         if (b[i] == 0)  {
             gpio_direction_output(gpio_pin_number, 0);
-            udelay(150);
+            udelay(375);
             gpio_direction_input(gpio_pin_number);
-            udelay(50);
+            udelay(125);
         }
         else{
             gpio_direction_output(gpio_pin_number, 0);
-            udelay(30);
+            udelay(75);
             gpio_direction_input(gpio_pin_number);
-            udelay(170);
+            udelay(425);
         }   
     }
     udelay(750);
