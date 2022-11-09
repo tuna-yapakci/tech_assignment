@@ -290,15 +290,17 @@ static char read_byte(void){
         wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
         already_awake = 1;
         */
+        /*
         while((gpio_get_value(gpio_pin_number) == 1)  && (!kthread_should_stop())) {
             //busy wait
         }
+        */
         //udelay(80);
         timer += 80000;
         while(timer > ktime_get_ns()) {}
         b[i] = gpio_get_value(gpio_pin_number);
-        //udelay(85);
-        timer += 85000;
+        //udelay(120);
+        timer += 120000;
         while(timer > ktime_get_ns()) {}
     }
 
