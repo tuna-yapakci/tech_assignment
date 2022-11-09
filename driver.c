@@ -451,6 +451,7 @@ static int slave_mode(void *p) {
         already_awake = 0;
         wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
         already_awake = 1;
+        printk("awaken\n");
         udelay(150);
         if(gpio_get_value(gpio_pin_number) == 1){
             continue;
