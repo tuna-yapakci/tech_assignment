@@ -606,7 +606,7 @@ static int __init gpio_driver_init(void){
     irq_num = gpio_to_irq(gpio_pin_number);
 
     irq_requested = 1;
-    if(request_irq(irq_num, (void*) irq_handler, IRQF_TRIGGER_LOW, "custom_gpio_driver", task)) {
+    if(request_irq(irq_num, (void*) irq_handler, IRQF_TRIGGER_LOW, name, task)) {
         printk(KERN_WARNING "request_irq failed\n");
         cleanup_func();
         return -1;
