@@ -82,10 +82,11 @@ static int data_push(struct DataQueue *queue, struct Data data) {
 }
 
 static int data_add_front(struct DataQueue *queue, struct Data data) {
+    int new_pos;
     if (queue->data_count == queue_size) {
-        return -1
+        return -1;
     }
-    int new_pos = (queue->first_pos) - 1;
+    new_pos = (queue->first_pos) - 1;
     if (new_pos == -1) {
         new_pos = queue_size - 1;
     }
