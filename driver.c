@@ -212,9 +212,12 @@ static void signal_to_pid_datarecv(void){ // change type maybe
 
 static int reset(void) {
     //reset returns -1 if no presence, 0 if no msg from slave, 1 if 
-    // there is a message from the slave
+    // there is a message from the slave, 2 if slave has no msg but master has
+    int slave_present;
+    int slave_message;
+    int master_message = (queue_to_send.data_count > 0);
     gpio_direction_output(gpio_pin_number, 0);
-    if(queue_to_send.data_count > 0) {
+    if(master_message) {
         udelay(300);
         gpio_direction_input(gpio_pin_number);
         udelay(200);
@@ -224,18 +227,22 @@ static int reset(void) {
         gpio_direction_input(gpio_pin_number);
     }
     udelay(100);
-    if(gpio_get_value(gpio_pin_number) == 0){
-        //slave present, check if it has data to send
-        udelay(150); //correct timings
-        if(gpio_get_value(gpio_pin_number) == 0) {
-            udelay(150);
-            return 1;
-        }
-        udelay(150);
+    slave_present = (gpio_get_value(gpio_pin_number) == 0);
+    udelay(150);
+    slave_message = (gpio_get_value(gpio_pin_number) == 0);
+    udelay(150);
+    if(!slave_present){
+        return -1;
+    }
+    else if(slave_message) {
+        return 1;
+    }
+    else if (master_message){
+        return 2;
+    }
+    else{
         return 0;
     }
-    udelay(300);
-    return -1;
 }
 /*
 static void send_response(void){
@@ -387,58 +394,63 @@ static int master_mode(void *p) {
 
     while(!kthread_should_stop()) {
         int status;
+
         mutex_lock(&mtx1);
         if(prev_data_not_read) {
             mutex_unlock(&mtx1);
             continue;
         }
         mutex_unlock(&mtx1);
+
         status = reset();
         if(status == -1) {
             printk("Slave is not present\n");
         }
         else if (status == 0) {
-            //if there is message in queue, send it
-            printk("Slave has no message\n");
-            if (queue_to_send.data_count > 0) {
-                send_message();
-            }
+            printk("Nobody has a message\n");
         }
-        else {
+        else if (status == 1) {
             printk("Slave has a message\n");
             read_message();
         }
-        mdelay(1000);
+        else {
+            printk("Master has a message");
+            send_message();
+        }
+        mdelay(1000); //try reducing this
     }
     return 0;
 }
 
 static int slave_mode(void *p) {
     printk("Kernel thread for slave started!\n");
+    while((registered_process == -1) && (!kthread_should_stop())) {
+        //User app is not working, happy busy waiting!
+        mdelay(1000);
+    }
     
     while(!kthread_should_stop()) {
         int send_mode;
         int read_mode = 0;
+
         mutex_lock(&mtx1);
         if(prev_data_not_read) {
             mutex_unlock(&mtx1);
             continue;
         }
         mutex_unlock(&mtx1);
+
         send_mode = (queue_to_send.data_count > 0);
 
-        //enable_irq(irq_num);
+        //wait till gpio reads 0;
         wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
-        
-        udelay(200);
+
+        udelay(150);
         if(gpio_get_value(gpio_pin_number) == 1){
             continue;
         }
-        udelay(200);
-        if(gpio_get_value(gpio_pin_number) == 1){
-            read_mode = 1;
-            printk("Master have message to send\n");
-        }
+        udelay(250);
+        read_mode = (gpio_get_value(gpio_pin_number) == 1);
         udelay(150);
         gpio_direction_output(gpio_pin_number, 0);
         udelay(100);
