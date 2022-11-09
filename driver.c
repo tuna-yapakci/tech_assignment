@@ -264,9 +264,14 @@ static char read_byte(void){
     int b[8];
     int i;
     for(i = 0; i < 8; i += 1){
+        /*
         already_awake = 0;
         wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
         already_awake = 1;
+        */
+        while(gpio_get_value == 1 && (!kthread_should_stop())) {
+            //busy wait
+        }
         udelay(80);
         b[i] = gpio_get_value(gpio_pin_number);
         udelay(85);
@@ -448,10 +453,16 @@ static int slave_mode(void *p) {
         send_mode = (queue_to_send.data_count > 0);
 
         //wait till gpio reads 0;
+        /*
         already_awake = 0;
         wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
         already_awake = 1;
-        udelay(100);
+        */
+        while(gpio_get_value == 1 && (!kthread_should_stop())) {
+            //busy wait
+        }
+
+        udelay(150);
         if(gpio_get_value(gpio_pin_number) == 1){
             continue;
         }
@@ -633,6 +644,8 @@ static int __init gpio_driver_init(void){
         cleanup_func();
         return -1;
     }
+
+    disable_irq(irq_num);
 
     init_waitqueue_head(&wq);
 
