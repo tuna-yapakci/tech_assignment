@@ -16,6 +16,9 @@
 
 static const char* dev_file;
 
+//prototype
+int send_message(std::string *msg, int is_command);
+
 void signal_handler(int sig_num) {
     //std::cout << "Signal received: " << sig_num << std:: endl;
     int file = open(dev_file, O_RDWR);
