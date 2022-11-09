@@ -188,6 +188,7 @@ static void cleanup_func(void){
     
 }
 
+/*
 static irqreturn_t irq_handler(int irq, void *dev_id, struct pt_regs *regs) {
     //make kthread wake up from sleep
     //printk("irq triggered\n");
@@ -198,6 +199,7 @@ static irqreturn_t irq_handler(int irq, void *dev_id, struct pt_regs *regs) {
     wake_up_interruptible(&wq);
     return IRQ_HANDLED;
 }
+*/
 
 static int gpio_setup_cdev(struct gpio_dev *g_dev){
     cdev_init(&g_dev->cdev, &gpio_fops);
@@ -518,7 +520,8 @@ static int gpio_close(struct inode *inode, struct file *file){
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp){
     mutex_lock(&mtx1);
-    uint8_t len = received_data.length;
+    uint8_t len;
+    len = received_data.length;
     if(copy_to_user(buff, &len, 1) > 0){
         return -1;
     }
