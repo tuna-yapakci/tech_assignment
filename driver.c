@@ -467,11 +467,11 @@ static int slave_mode(void *p) {
             udelay(100);
             gpio_direction_input(gpio_pin_number);
             udelay(100);
-            send_message();
+            //send_message();
         }
         else if(read_mode){
             udelay(250);
-            read_message();
+            //read_message();
         }
         else {
             udelay(250);
