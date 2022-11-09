@@ -444,7 +444,7 @@ static int master_mode(void *p) {
             printk("Master: Master has a message");
             send_message();
         }
-        mdelay(1000); //try reducing this
+        mdelay(10); //try reducing this
     }
     return 0;
 }
