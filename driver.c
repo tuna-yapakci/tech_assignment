@@ -171,7 +171,7 @@ static void cleanup_func(void){
     }
     if(kthread_started) {
         kthread_stop(comm_thread);
-        wake_up_interruptible(&wq);
+        //wake_up_interruptible(&wq);
     }
     if(gpio_exported) {
         gpio_unexport(gpio_pin_number);
