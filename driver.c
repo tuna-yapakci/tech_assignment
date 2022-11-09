@@ -269,7 +269,7 @@ static char read_byte(void){
         wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
         already_awake = 1;
         */
-        while(gpio_get_value == 1 && (!kthread_should_stop())) {
+        while((gpio_get_value(gpio_pin_number) == 1)  && (!kthread_should_stop())) {
             //busy wait
         }
         udelay(80);
@@ -458,7 +458,7 @@ static int slave_mode(void *p) {
         wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
         already_awake = 1;
         */
-        while(gpio_get_value == 1 && (!kthread_should_stop())) {
+        while((gpio_get_value(gpio_pin_number) == 1) && (!kthread_should_stop())) {
             //busy wait
         }
 
