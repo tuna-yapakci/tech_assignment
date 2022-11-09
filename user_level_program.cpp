@@ -32,6 +32,7 @@ void signal_handler(int sig_num) {
         std::cout << "Data received" << std::endl;
         u_int8_t data_size;
         read(file, &data_size, 1);
+        std::cout << data_size << std::endl;
         std::string str;
         read(file, &str, data_size);
         std::cout << "The other side says: " << str << std::endl;
