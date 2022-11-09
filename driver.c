@@ -494,7 +494,6 @@ static int slave_mode(void *p) {
         int send_mode;
         int read_mode = 0;
         
-        timer = ktime_get_ns();
         mutex_lock(&mtx1);
         if(prev_data_not_read) {
             mutex_unlock(&mtx1);
@@ -514,6 +513,7 @@ static int slave_mode(void *p) {
             //busy wait
         }
 
+        timer = ktime_get_ns();
         //udelay(350);
         timer += 350000;
         while(timer > ktime_get_ns()) {}
