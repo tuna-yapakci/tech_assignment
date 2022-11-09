@@ -362,9 +362,10 @@ static void send_message(void) {
     struct Data dt;
     int i;
     char checksum;
-    char ack;
+    int rest;
     data_read_top(&queue_to_send, &dt); //this doesn't fail unless the queue is empty (we always check before calling send_message())
-                
+
+    rest = 10 - (dt.length);
     //calculate checksum
     checksum = 0xAA ^ (dt.length);
     for (i = 0; i < dt.length; i += 1) {
@@ -376,6 +377,9 @@ static void send_message(void) {
         send_byte(dt.buffer[i]);
     }
     send_byte(checksum);
+    for (i = 0; i < rest; i += 1) {
+        send_byte((char) 0xFF);
+    }
     mdelay(10);
 
     //------before this-------
