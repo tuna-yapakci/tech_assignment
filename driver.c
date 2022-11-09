@@ -509,7 +509,7 @@ static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, lof
     if(copy_to_user(buff, &len, 1) > 0){
         return -1;
     }
-    if(copy_to_user(buff, received_data.buffer, received_data.length) > 0){
+    if(copy_to_user(buff + 1, received_data.buffer, received_data.length) > 0){
         return -1;
     }
     prev_data_not_read = 0;
