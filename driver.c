@@ -295,12 +295,12 @@ static char read_byte(void){
             //busy wait
         }
         */
-        //udelay(80);
-        timer += 80000;
+        //udelay(40);
+        timer += 40000;
         while(timer > ktime_get_ns()) {}
         b[i] = gpio_get_value(gpio_pin_number);
-        //udelay(120);
-        timer += 120000;
+        //udelay(60);
+        timer += 60000;
         while(timer > ktime_get_ns()) {}
     }
 
@@ -322,7 +322,7 @@ static void read_message(void){
 
     for (i = 0; i < 13; i += 1){
         message[i] = read_byte();
-        printk("%c\n",message[i]);
+        //printk("%c\n",message[i]);
     }
 
     if(message[0] != 0xAA) {
@@ -383,22 +383,22 @@ static void send_byte(char byte) {
     for(i = 0; i < 8; i += 1) {
         if (b[i] == 0)  {
             gpio_direction_output(gpio_pin_number, 0);
-            //udelay(130);
-            timer += 130000;
+            //udelay(65);
+            timer += 65000;
             while(timer > ktime_get_ns()) {}
             gpio_direction_input(gpio_pin_number);
-            //udelay(70);
-            timer += 70000;
+            //udelay(35);
+            timer += 35000;
             while(timer > ktime_get_ns()) {}
         }
         else{
             gpio_direction_output(gpio_pin_number, 0);
-            //udelay(30);
-            timer += 30000;
+            //udelay(15);
+            timer += 15000;
             while(timer > ktime_get_ns()) {}
             gpio_direction_input(gpio_pin_number);
-            //udelay(170);
-            timer += 170000;
+            //udelay(85);
+            timer += 85000;
             while(timer > ktime_get_ns()) {}
         }   
     }
