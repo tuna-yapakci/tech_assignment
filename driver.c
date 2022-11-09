@@ -14,9 +14,6 @@
 #include <linux/delay.h>
 #include <linux/kthread.h>
 #include <linux/mutex.h>
-#include <linux/interrupt.h>
-#include <asm/irq.h>
-#include <linux/wait.h>
 MODULE_LICENSE("GPL");
 
 #define MAGIC 'k'
@@ -136,11 +133,6 @@ struct Data received_data;
 static int prev_data_not_read = 0;
 struct mutex mtx1;
 static u64 timer;
-/*
-unsigned int irq_num;
-wait_queue_head_t wq;
-int already_awake;
-*/
 
 //enables indicating the pin number during initialization
 //S_IRUGO means the parameter can be read but cannot be changed
@@ -158,23 +150,16 @@ static int gpio_requested = 0;
 static int gpio_exported = 0;
 static int kthread_started = 0;
 static int queue_kmalloc = 0;
-//static int irq_requested = 0;
 
 //--------------------Auxiliary Functions------------------------
 
 //self explanatory
 static void cleanup_func(void){
-    /*
-    if(irq_requested) {
-        free_irq(irq_num, NULL);
-    }
-    */
     if(queue_kmalloc) {
         data_queue_free(&queue_to_send);
     }
     if(kthread_started) {
         kthread_stop(comm_thread);
-        //wake_up_interruptible(&wq);
     }
     if(gpio_exported) {
         gpio_unexport(gpio_pin_number);
@@ -191,19 +176,6 @@ static void cleanup_func(void){
     
 }
 
-/*
-static irqreturn_t irq_handler(int irq, void *dev_id, struct pt_regs *regs) {
-    //make kthread wake up from sleep
-    //printk("irq triggered\n");
-    if(already_awake){
-        return IRQ_HANDLED;
-    }
-    //printk("Waking up\n");
-    wake_up_interruptible(&wq);
-    return IRQ_HANDLED;
-}
-*/
-
 static int gpio_setup_cdev(struct gpio_dev *g_dev){
     cdev_init(&g_dev->cdev, &gpio_fops);
     g_dev->cdev.owner = THIS_MODULE;
@@ -214,7 +186,7 @@ static int gpio_setup_cdev(struct gpio_dev *g_dev){
     return 0;
 }
 
-static void signal_to_pid_datarecv(void){ // change type maybe
+static void signal_to_pid_datarecv(void){
     if (registered_process > 0){
         if(send_sig_info(SIGDATARECV, (struct kernel_siginfo*) 1, task) < 0) {
             printk(KERN_WARNING "Error sending data receive signal\n");
@@ -269,11 +241,7 @@ static int reset(void) {
         return 0;
     }
 }
-/*
-static void send_response(void){
 
-}
-*/
 static char read_byte(void);
 static void read_message(void);
 static void send_message(void);
@@ -285,16 +253,6 @@ static char read_byte(void){
     int i;
     timer = ktime_get_ns();
     for(i = 0; i < 8; i += 1){
-        /*
-        already_awake = 0;
-        wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
-        already_awake = 1;
-        */
-        /*
-        while((gpio_get_value(gpio_pin_number) == 1)  && (!kthread_should_stop())) {
-            //busy wait
-        }
-        */
         //udelay(40);
         timer += 40000;
         while(timer > ktime_get_ns()) {}
@@ -364,13 +322,6 @@ static void read_message(void){
 
         signal_to_pid_datarecv();
     }
-    
-    //between each bit start a timeout (or transmission ended) timer
-    //when transmission ends check data integrity (length and checksum)
-    //if correct, check if command
-    //if command respond
-    //if no command send ack
-    //if corruption, send fail, listen again
 }
 
 static void send_byte(char byte) {
@@ -438,20 +389,17 @@ static void send_message(void) {
     if(ack == 0x0F){
         data_pop(&queue_to_send, &dt);
     }
-    //------before this-------
-    //if command get response, send ack
-    //else read ack, if ok, data_pop
-    //if ack_fail, reset
-    //if no response after udelay, reset
-    //-------------------------
+
 }
 
 static int master_mode(void *p) {
     printk("Kernel thread for master started!\n");
+    /*
     while((registered_process == -1) && (!kthread_should_stop())) {
         //User app is not working, happy busy waiting!
         mdelay(1000);
     }
+    */
 
     while(!kthread_should_stop()) {
         int status;
@@ -478,18 +426,20 @@ static int master_mode(void *p) {
             printk("Master: Master has a message");
             send_message();
         }
-        mdelay(10); //try reducing this
+        mdelay(10);
     }
     return 0;
 }
 
 static int slave_mode(void *p) {
     printk("Kernel thread for slave started!\n");
+    /*
     while((registered_process == -1) && (!kthread_should_stop())) {
         //User app is not working, happy busy waiting!
         mdelay(1000);
     }
-    
+    */
+
     while(!kthread_should_stop()) {
         int send_mode;
         int read_mode = 0;
@@ -503,12 +453,6 @@ static int slave_mode(void *p) {
 
         send_mode = (queue_to_send.data_count > 0);
 
-        //wait till gpio reads 0;
-        /*
-        already_awake = 0;
-        wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
-        already_awake = 1;
-        */
         while((gpio_get_value(gpio_pin_number) == 1) && (!kthread_should_stop())) {
             //busy wait
         }
@@ -602,7 +546,6 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
         tmp.buffer[i] = msg[i];
     }
     tmp.length = count;
-    //printk("%d\n", queue_to_send.data_count);
     if (data_push(&queue_to_send, tmp) < 0) {
         printk(KERN_WARNING "Queue is full, write failed\n");
         return -1;
@@ -628,7 +571,6 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
             kthread_started = 1;
             if(comm_role == 0) {
                 comm_thread = kthread_run(master_mode, NULL, "master_thread");
-                //failure case?
             }
             else if(comm_role == 1) {
                 comm_thread = kthread_run(slave_mode, NULL, "slave_thread");
@@ -643,7 +585,6 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
         else {
             registered_process = -1;
             kthread_stop(comm_thread);
-            //wake_up_interruptible(&wq);
             kthread_started = 0;
             queue_to_send.data_count = 0;
             queue_to_send.first_pos = 0;
@@ -694,10 +635,9 @@ static int __init gpio_driver_init(void){
     }
     gpio_direction_input(gpio_pin_number);
 
-    gpio_exported = 1;
-    gpio_export(gpio_pin_number, false); //not sure if this is relevant
+    //gpio_exported = 1;
+    //gpio_export(gpio_pin_number, false); //not sure if this is relevant
 
-    
     if(data_queue_init(&queue_to_send) < 0){
         printk(KERN_WARNING "kmalloc failed\n");
         cleanup_func();
@@ -705,21 +645,7 @@ static int __init gpio_driver_init(void){
     }
     queue_kmalloc = 1;
 
-    /* This part caused too many bugs
-    irq_num = gpio_to_irq(gpio_pin_number);
-
-    irq_requested = 1;
-    if(request_irq(irq_num, (void*) irq_handler, IRQF_TRIGGER_FALLING, name, task)) {
-        printk(KERN_WARNING "request_irq failed\n");
-        cleanup_func();
-        return -1;
-    }
-    disable_irq(irq_num);
-    init_waitqueue_head(&wq);
-    */
-
     printk("Driver loaded\n");
-
     return 0;
 }
 

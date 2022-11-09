@@ -43,7 +43,7 @@ void signal_handler(int sig_num) {
 int send_message(std::string *msg, int is_command){
     int file = open(dev_file, O_RDWR);
     if (file < 0) {
-        std::cout << "Could't open file " << std::endl;
+        std::cout << "Could't open dev file " << std::endl;
         return -1;
     }
 
