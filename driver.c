@@ -4,8 +4,8 @@
 #include <linux/moduleparam.h>
 #include <linux/kdev_t.h>
 #include <linux/fs.h>
-#include <linux/stat.h>
-#include <linux/sched.h>
+//#include <linux/stat.h>
+//#include <linux/sched.h>
 #include <linux/cdev.h>
 #include <linux/gpio.h>
 #include <asm/uaccess.h>
@@ -398,17 +398,17 @@ static int master_mode(void *p) {
 
         status = reset();
         if(status == -1) {
-            printk("Master: Slave is not present\n");
+            //printk("Master: Slave is not present\n");
         }
         else if (status == 0) {
-            printk("Master: Nobody has a message\n");
+            //printk("Master: Nobody has a message\n");
         }
         else if (status == 1) {
-            printk("Master: Slave has a message\n");
+            //printk("Master: Slave has a message\n");
             read_message();
         }
         else {
-            printk("Master: Master has a message");
+            //printk("Master: Master has a message");
             send_message();
         }
         mdelay(10);
