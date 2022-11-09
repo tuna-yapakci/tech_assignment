@@ -115,7 +115,7 @@ static int data_read_top(struct DataQueue *queue, struct Data *data_to_copy) {
     return 0;
 }
 
-//this is for debugging
+/* This function was for debugging
 static void data_print(struct DataQueue *queue) {
     int i;
     printk("Printing data\n");
@@ -123,7 +123,7 @@ static void data_print(struct DataQueue *queue) {
         printk("Data %d: %s", i, (queue->array_pt[(queue->first_pos + i) % queue_size]).buffer);
     }
 }
-
+*/
 //--------------------Variables---------------------------------
 
 static dev_t dev = 0;
@@ -519,8 +519,8 @@ static int gpio_close(struct inode *inode, struct file *file){
 }
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp){
-    mutex_lock(&mtx1);
     uint8_t len;
+    mutex_lock(&mtx1);
     len = received_data.length;
     if(copy_to_user(buff, &len, 1) > 0){
         return -1;
