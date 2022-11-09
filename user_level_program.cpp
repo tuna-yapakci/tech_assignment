@@ -30,6 +30,9 @@ void signal_handler(int sig_num) {
     }
     else if (sig_num == SIGDATARECV) {
         std::cout << "Data received" << std::endl;
+        std::string str;
+        read(file, &str, 10);
+        std::cout << "The other side says: " << str << std::endl;
     }
     close(file);
 }
