@@ -429,7 +429,7 @@ static int slave_mode(void *p) {
 
         //enable_irq(irq_num);
         wait_event_interruptible(wq, 0);
-
+        printk("slave wakes up\n");
         udelay(200);
         if(gpio_get_value(gpio_pin_number) == 1){
             continue;
