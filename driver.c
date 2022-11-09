@@ -71,7 +71,6 @@ static int data_queue_init(struct DataQueue *queue){
 
 static int data_queue_free(struct DataQueue *queue){
     kfree(queue->array_pt);
-    //printk(KERN_INFO "Queue pointer freed\n");
     return 0;
 }
 
@@ -147,7 +146,6 @@ module_param(comm_role, int, S_IRUGO);
 static int chrdev_allocated = 0;
 static int device_registered = 0;
 static int gpio_requested = 0;
-static int gpio_exported = 0;
 static int kthread_started = 0;
 static int queue_kmalloc = 0;
 
@@ -160,9 +158,6 @@ static void cleanup_func(void){
     }
     if(kthread_started) {
         kthread_stop(comm_thread);
-    }
-    if(gpio_exported) {
-        gpio_unexport(gpio_pin_number);
     }
     if(gpio_requested) {
         gpio_free(gpio_pin_number);
@@ -280,7 +275,6 @@ static void read_message(void){
 
     for (i = 0; i < 13; i += 1){
         message[i] = read_byte();
-        //printk("%c\n",message[i]);
     }
 
     if(message[0] != 0xAA) {
@@ -303,7 +297,6 @@ static void read_message(void){
     }
 
     if(is_corrupted) {
-        //send 0x00
         mdelay(15);
         send_byte(0x00);
         
@@ -316,7 +309,6 @@ static void read_message(void){
         }
         prev_data_not_read = 1;
         mutex_unlock(&mtx1);
-        //send 0x0F
         mdelay(15);
         send_byte(0x0F);
 
@@ -329,7 +321,7 @@ static void send_byte(char byte) {
     int b[8];
     timer = ktime_get_ns();
     for(i = 0; i < 8; i += 1) {
-        b[i] = (int) ((byte >> i) & (0x01)); //check if this is correct
+        b[i] = (int) ((byte >> i) & (0x01));
     }
     for(i = 0; i < 8; i += 1) {
         if (b[i] == 0)  {
@@ -367,7 +359,6 @@ static void send_message(void) {
     data_read_top(&queue_to_send, &dt); //this doesn't fail unless the queue is empty (we always check before calling send_message())
 
     rest = 10 - (dt.length);
-    //calculate checksum
     checksum = 0xAA ^ (dt.length);
     for (i = 0; i < dt.length; i += 1) {
         checksum = checksum ^ dt.buffer[i];
@@ -394,12 +385,6 @@ static void send_message(void) {
 
 static int master_mode(void *p) {
     printk("Kernel thread for master started!\n");
-    /*
-    while((registered_process == -1) && (!kthread_should_stop())) {
-        //User app is not working, happy busy waiting!
-        mdelay(1000);
-    }
-    */
 
     while(!kthread_should_stop()) {
         int status;
@@ -433,12 +418,6 @@ static int master_mode(void *p) {
 
 static int slave_mode(void *p) {
     printk("Kernel thread for slave started!\n");
-    /*
-    while((registered_process == -1) && (!kthread_should_stop())) {
-        //User app is not working, happy busy waiting!
-        mdelay(1000);
-    }
-    */
 
     while(!kthread_should_stop()) {
         int send_mode;
@@ -634,9 +613,6 @@ static int __init gpio_driver_init(void){
         return -1;
     }
     gpio_direction_input(gpio_pin_number);
-
-    //gpio_exported = 1;
-    //gpio_export(gpio_pin_number, false); //not sure if this is relevant
 
     if(data_queue_init(&queue_to_send) < 0){
         printk(KERN_WARNING "kmalloc failed\n");
