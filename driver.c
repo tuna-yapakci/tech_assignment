@@ -283,18 +283,18 @@ static char read_byte(void){
     char byte = 0x00;
     int b[8];
     int i;
-    
+    timer = ktime_get_ns();
     for(i = 0; i < 8; i += 1){
         /*
         already_awake = 0;
         wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
         already_awake = 1;
         */
-        
+        /*
         while((gpio_get_value(gpio_pin_number) == 1)  && (!kthread_should_stop())) {
             //busy wait
         }
-        timer = ktime_get_ns();
+        */
         //udelay(80);
         timer += 80000;
         while(timer > ktime_get_ns()) {}
