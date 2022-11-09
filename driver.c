@@ -187,7 +187,7 @@ static void cleanup_func(void){
 static irqreturn_t irq_handler(int irq, void *dev_id, struct pt_regs *regs) {
     //make kthread wake up from sleep
     printk("irq triggered\n");
-    //wake_up_interruptible(&wq);
+    wake_up_interruptible(&wq);
     return IRQ_HANDLED;
 }
 
