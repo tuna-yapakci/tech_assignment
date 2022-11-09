@@ -43,7 +43,7 @@ void signal_handler(int sig_num) {
             std::string msg;
             msg.push_back(0xBC);
             for (int i = 0; i < len - 1; i += 1) {
-                msg.push_back(str[i+2]);
+                msg.push_back(str[i+2] + 2);
             }
             if(send_message(&msg, 0) < 0) {
                 std::cout << "Error responding to command (queue might be full)" << std::endl;
