@@ -9,7 +9,8 @@
 #define MAGIC 'k'
 #define USER_APP_REG _IOW(MAGIC, 1, int*)
 #define USER_APP_UNREG _IO(MAGIC, 2)
-#define SIGDATARECV 47
+//Signal number that the driver sends when a message is received
+#define SIGDATARECV 47 
 #define MAX_NUM_BYTES_IN_A_MESSAGE 10
 #define MASTERNAME "/dev/gpio_master"
 #define SLAVENAME "/dev/gpio_slave"
@@ -34,12 +35,14 @@ void signal_handler(int sig_num) {
     else if (sig_num == SIGDATARECV) {
         //std::cout << "Data received" << std::endl;
         char str[11];
+         //The first character read is the message length (check gpio_read in driver)
         read(file, &str, 11);
         u_int8_t l = (u_int8_t) str[0];
         int len = (int) l;
         str[len + 1] = '\0';
         if (str[1] == 0xBB) {
             std::cout << "The other side commands: " << &(str[2]) << std::endl;
+            //Prepare and send response
             std::string msg;
             msg.push_back(0xBC);
             for (int i = 0; i < len - 1; i += 1) {
@@ -62,6 +65,7 @@ void signal_handler(int sig_num) {
     close(file);
 }
 
+//Writes a string to the proper device file
 int send_message(std::string *msg, int is_command){
     int file = open(dev_file, O_RDWR);
     if (file < 0) {
@@ -104,7 +108,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if(argv[1][0] == '0') { //this just checks the first char of the argument
+    if(argv[1][0] == '0') {
         dev_file = MASTERNAME;
     }
     else if(argv[1][0] == '1') {
@@ -115,7 +119,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    //registering signal
+    //Registering signals
     signal(SIGDATARECV, signal_handler);
     signal(SIGINT, signal_handler);
 
@@ -124,7 +128,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Could't open file " << std::endl;
     }
 
-    //first register the process to the driver
+    //Registering the process to the driver
     pid_t pid = getpid();
     std::cout << "Process ID is " << pid << std::endl;
     if(ioctl(file, USER_APP_REG, (int*) &pid)) {
@@ -133,6 +137,8 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     };
 
+    //Terminal interface to send and print messages
+    //Not beautiful but works well
     while(1) {
         std::string mode;
         std::string msg;

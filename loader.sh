@@ -4,6 +4,7 @@ module2="driver2"
 device="gpio_master"
 device2="gpio_slave"
 
+#Loads 2 separate modules to simulate 2 different devices
 /sbin/insmod ${module}.ko gpio_pin_number=22 comm_role=0 || exit 1
 /sbin/insmod ${module2}.ko gpio_pin_number=17 comm_role=1 || exit 1
 

@@ -1,6 +1,8 @@
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
 
+#Compiles 2 drivers from the same source code
+#(Kernel doesn't allow loading the same module twice)
 obj-m += driver.o
 obj-m += driver2.o
 

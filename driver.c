@@ -43,7 +43,6 @@ static struct file_operations gpio_fops = {
     .unlocked_ioctl = gpioctl,
 };
 
-
 //This part implements a circular fifo queue
 static const int queue_size = 5;
 
@@ -97,7 +96,7 @@ static int data_add_front(struct DataQueue *queue, struct Data data) {
     return 0;
 }
 
-//this function copies first element and removes it from the queue
+//This function copies first element and removes it from the queue
 static int data_pop(struct DataQueue *queue, struct Data *data_to_copy) {
     int i;
     if (queue->data_count == 0) {
@@ -112,7 +111,7 @@ static int data_pop(struct DataQueue *queue, struct Data *data_to_copy) {
     return 0;
 }
 
-//this function just copies the first element
+//This function just copies the first element
 static int data_read_top(struct DataQueue *queue, struct Data *data_to_copy) {
     int i;
     if (queue->data_count == 0) {
@@ -136,19 +135,33 @@ static void data_print(struct DataQueue *queue) {
 */
 //--------------------Variables---------------------------------
 
+//Stuff needed to initialize a character device
 static dev_t dev = 0;
-static int registered_process = -1;
-struct task_struct *task;
-struct task_struct *comm_thread;
 struct gpio_dev g_dev;
+
+//task_struct for the kernel thread that gets created when a process registers
+struct task_struct *comm_thread;
+
+//Queue to store messages that are going to get sent
 struct DataQueue queue_to_send;
+
+//A variable that holds the PID of current registered process (-1 means no process is registered)
+static int registered_process = -1;
+// and a task_struct related to that process
+struct task_struct *task;
+
+//Following variables hold last read message and make sure it is read before another one arrives
 struct Data received_data;
 static int prev_data_not_read = 0;
+
+//Mutexes to guard shared memory
 struct mutex mtx1;
 struct mutex mtx2;
+
+//Stores a kernel timestamp, needed for accuracy of timing during communication
 static u64 timer;
 
-//enables indicating the pin number during initialization
+//Enables indicating the pin number during initialization
 //S_IRUGO means the parameter can be read but cannot be changed
 static int gpio_pin_number = -1;
 module_param(gpio_pin_number, int, S_IRUGO);
@@ -166,7 +179,7 @@ static int queue_kmalloc = 0;
 
 //--------------------Auxiliary Functions------------------------
 
-//self explanatory
+//Self explanatory, gets called when unloading module, or failure during initialization
 static void cleanup_func(void){
     if(queue_kmalloc) {
         data_queue_free(&queue_to_send);
@@ -186,6 +199,7 @@ static void cleanup_func(void){
     
 }
 
+//Sets up and adds a character device to the system
 static int gpio_setup_cdev(struct gpio_dev *g_dev){
     cdev_init(&g_dev->cdev, &gpio_fops);
     g_dev->cdev.owner = THIS_MODULE;
@@ -196,6 +210,7 @@ static int gpio_setup_cdev(struct gpio_dev *g_dev){
     return 0;
 }
 
+//Sends data received signal to the registered process (user app)
 static void signal_to_pid_datarecv(void){
     if (registered_process > 0){
         if(send_sig_info(SIGDATARECV, (struct kernel_siginfo*) 1, task) < 0) {
@@ -203,6 +218,15 @@ static void signal_to_pid_datarecv(void){
         }
     }
 }
+
+
+//Functions that implement our communication protocol
+//(more info on the report)
+static int reset(void);
+static char read_byte(void);
+static void read_message(void);
+static void send_message(void);
+static void send_byte(char byte);
 
 static int reset(void) {
     //reset returns -1 if no presence, 0 if no msg from slave, 1 if 
@@ -254,11 +278,6 @@ static int reset(void) {
         return 0;
     }
 }
-
-static char read_byte(void);
-static void read_message(void);
-static void send_message(void);
-static void send_byte(char byte);
 
 static char read_byte(void){
     char byte = 0x00;
@@ -519,20 +538,29 @@ static int gpio_close(struct inode *inode, struct file *file){
     return 0;
 }
 
+//Sends the received data to the user space (when dev file is read)
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp){
     uint8_t len;
     mutex_lock(&mtx1);
+    if (prev_data_not_read == 0) {
+        mutex_unlock(&mtx1);
+        return -1;
+    }
     len = received_data.length;
     if(copy_to_user(buff, &len, 1) > 0){
+        mutex_unlock(&mtx1);
         return -1;
     }
     if(copy_to_user(buff + 1, received_data.buffer, received_data.length) > 0){
+        mutex_unlock(&mtx1);
         return -1;
     }
     prev_data_not_read = 0;
     mutex_unlock(&mtx1);
     return 0;
 }
+
+//Adds data written to dev file to the queue
 static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t count, loff_t *offp){
     char msg[10];
     struct Data tmp;
@@ -544,13 +572,14 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
     }
     if(copy_from_user(msg, buff, count) > 0) {
         printk(KERN_WARNING "Error writing data");
+        return -1;
     }
 
     for (i = 0; i < count; i += 1){
         tmp.buffer[i] = msg[i];
     }
     tmp.length = count;
-    
+    //Send responses first by adding them on the front 
     if (tmp.buffer[0] == 0xBC) {
         mutex_lock(&mtx2);
         if (data_add_front(&queue_to_send, tmp) < 0) {
@@ -572,6 +601,7 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
     return count;
 }
 
+//Does things that are necessary to register and unregister user level processes
 static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
     if(cmd == USER_APP_REG) {
         if (registered_process >= 0) {
@@ -616,6 +646,7 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
 
 //-----------------Initializer----------------------------------
 
+//This function is called to load the driver into the kernel (by insmod)
 static int __init gpio_driver_init(void){
     char* name;
     mutex_init(&mtx1);
@@ -668,6 +699,7 @@ static int __init gpio_driver_init(void){
 }
 
 //---------------Safe Remove Func-------------------------------
+//This function is called when removing the module from the kernel (by rmmod)
 static void __exit gpio_driver_exit(void){
     cleanup_func();
     printk("Driver removed\n");
