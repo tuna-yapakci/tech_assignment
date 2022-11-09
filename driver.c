@@ -505,7 +505,8 @@ static int gpio_close(struct inode *inode, struct file *file){
 
 static ssize_t gpio_read(struct file *filp, char __user *buff, size_t count, loff_t *offp){
     mutex_lock(&mtx1);
-    if(copy_to_user(buff, &(received_data.length), 1) > 0){
+    uint8_t len = received_data.length;
+    if(copy_to_user(buff, &len, 1) > 0){
         return -1;
     }
     if(copy_to_user(buff, received_data.buffer, received_data.length) > 0){
