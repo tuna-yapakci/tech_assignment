@@ -17,7 +17,7 @@
 static const char* dev_file;
 
 void signal_handler(int sig_num) {
-    std::cout << "Signal received: " << sig_num << std:: endl;
+    //std::cout << "Signal received: " << sig_num << std:: endl;
     int file = open(dev_file, O_RDWR);
     if (file < 0) {
         std::cout << "Could't open file" << std::endl;
@@ -29,10 +29,7 @@ void signal_handler(int sig_num) {
         exit(EXIT_SUCCESS);
     }
     else if (sig_num == SIGDATARECV) {
-        std::cout << "Data received" << std::endl;
-        //u_int8_t data_size;
-        //read(file, &data_size, 1);
-        //std::cout << data_size << std::endl;
+        //std::cout << "Data received" << std::endl;
         char str[11];
         read(file, &str, 11);
         u_int8_t l = (u_int8_t) str[0];

@@ -135,9 +135,11 @@ struct DataQueue queue_to_send;
 struct Data received_data;
 static int prev_data_not_read = 0;
 struct mutex mtx1;
+/*
 unsigned int irq_num;
 wait_queue_head_t wq;
 int already_awake;
+*/
 
 //enables indicating the pin number during initialization
 //S_IRUGO means the parameter can be read but cannot be changed
@@ -155,7 +157,7 @@ static int gpio_requested = 0;
 static int gpio_exported = 0;
 static int kthread_started = 0;
 static int queue_kmalloc = 0;
-static int irq_requested = 0;
+//static int irq_requested = 0;
 
 //--------------------Auxiliary Functions------------------------
 
@@ -317,6 +319,8 @@ static void read_message(void){
 
     if(is_corrupted) {
         //send 0x00
+        mdelay(15);
+        send_byte(0x00);
         
     }
     else {
@@ -328,6 +332,8 @@ static void read_message(void){
         prev_data_not_read = 1;
         mutex_unlock(&mtx1);
         //send 0x0F
+        mdelay(15);
+        send_byte(0x0F);
 
         signal_to_pid_datarecv();
     }
@@ -367,6 +373,7 @@ static void send_message(void) {
     struct Data dt;
     int i;
     char checksum;
+    char ack;
     int rest;
     data_read_top(&queue_to_send, &dt); //this doesn't fail unless the queue is empty (we always check before calling send_message())
 
@@ -386,7 +393,13 @@ static void send_message(void) {
         send_byte((char) 0xFF);
     }
     mdelay(10);
-
+    while((gpio_get_value(gpio_pin_number) == 1)  && (!kthread_should_stop())) {
+            //busy wait
+    }
+    ack = read_byte();
+    if(ack == 0x0F){
+        data_pop(&queue_to_send, &dt);
+    }
     //------before this-------
     //if command get response, send ack
     //else read ack, if ok, data_pop
@@ -636,6 +649,7 @@ static int __init gpio_driver_init(void){
     }
     queue_kmalloc = 1;
 
+    /* This part caused too many bugs
     irq_num = gpio_to_irq(gpio_pin_number);
 
     irq_requested = 1;
@@ -644,10 +658,9 @@ static int __init gpio_driver_init(void){
         cleanup_func();
         return -1;
     }
-
     disable_irq(irq_num);
-
     init_waitqueue_head(&wq);
+    */
 
     printk("Driver loaded\n");
 
