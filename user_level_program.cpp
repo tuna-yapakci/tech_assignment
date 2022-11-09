@@ -35,10 +35,10 @@ void signal_handler(int sig_num) {
         //std::cout << data_size << std::endl;
         char str[11];
         read(file, &str, 11);
-        u_int8_t len = (u_int8_t) str[0];
-        int len2 = (int) len;
-        std::cout << len2 << std::endl;
-        std::cout << "The other side says: " << str[1] << std::endl;
+        u_int8_t l = (u_int8_t) str[0];
+        int len = (int) l;
+        str[len + 1] = '\0';
+        std::cout << "The other side says: " << &(str[1]) << std::endl;
     }
     close(file);
 }
