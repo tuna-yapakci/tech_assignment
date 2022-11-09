@@ -4,8 +4,6 @@
 #include <linux/moduleparam.h>
 #include <linux/kdev_t.h>
 #include <linux/fs.h>
-//#include <linux/stat.h>
-//#include <linux/sched.h>
 #include <linux/cdev.h>
 #include <linux/gpio.h>
 #include <asm/uaccess.h>
@@ -131,6 +129,7 @@ struct DataQueue queue_to_send;
 struct Data received_data;
 static int prev_data_not_read = 0;
 struct mutex mtx1;
+struct mutex mtx2;
 static u64 timer;
 
 //enables indicating the pin number during initialization
@@ -194,7 +193,10 @@ static int reset(void) {
     // there is a message from the slave, 2 if slave has no msg but master has
     int slave_present;
     int slave_message;
-    int master_message = (queue_to_send.data_count > 0);
+    int master_message;
+    mutex_lock(&mtx2);
+    master_message = (queue_to_send.data_count > 0);
+    mutex_unlock(&mtx2);
     gpio_direction_output(gpio_pin_number, 0);
     timer = ktime_get_ns();
     if(master_message) {
@@ -356,7 +358,10 @@ static void send_message(void) {
     char checksum;
     char ack;
     int rest;
+
+    mutex_lock(&mtx2);
     data_read_top(&queue_to_send, &dt); //this doesn't fail unless the queue is empty (we always check before calling send_message())
+    mutex_unlock(&mtx2);
 
     rest = 10 - (dt.length);
     checksum = 0xAA ^ (dt.length);
@@ -378,7 +383,9 @@ static void send_message(void) {
     }
     ack = read_byte();
     if(ack == 0x0F){
+        mutex_lock(&mtx2);
         data_pop(&queue_to_send, &dt);
+        mutex_unlock(&mtx2);
     }
 
 }
@@ -430,7 +437,9 @@ static int slave_mode(void *p) {
         }
         mutex_unlock(&mtx1);
 
+        mutex_lock(&mtx2);
         send_mode = (queue_to_send.data_count > 0);
+        mutex_unlock(&mtx2);
 
         while((gpio_get_value(gpio_pin_number) == 1) && (!kthread_should_stop())) {
             //busy wait
@@ -450,7 +459,7 @@ static int slave_mode(void *p) {
         while(timer > ktime_get_ns()) {}
         gpio_direction_input(gpio_pin_number);
         if(send_mode) {
-            printk("Slave: Sending message");
+            //printk("Slave: Sending message");
             //udelay(50);
             timer += 50000;
             while(timer > ktime_get_ns()) {}
@@ -465,7 +474,7 @@ static int slave_mode(void *p) {
             send_message();
         }
         else if(read_mode){
-            printk("Slave: Reading message");
+            //printk("Slave: Reading message");
             //udelay(250);
             timer += 250000;
             while(timer > ktime_get_ns()) {}
@@ -525,11 +534,13 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
         tmp.buffer[i] = msg[i];
     }
     tmp.length = count;
+    mutex_lock(&mtx2);
     if (data_push(&queue_to_send, tmp) < 0) {
+        mutex_unlock(&mtx2);
         printk(KERN_WARNING "Queue is full, write failed\n");
         return -1;
     };
-
+    mutex_unlock(&mtx2);
     return count;
 }
 
@@ -565,8 +576,10 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
             registered_process = -1;
             kthread_stop(comm_thread);
             kthread_started = 0;
+            mutex_lock(&mtx2);
             queue_to_send.data_count = 0;
             queue_to_send.first_pos = 0;
+            mutex_unlock(&mtx2);
             printk(KERN_INFO "User app unregistered\n");
         }
     }
@@ -578,6 +591,7 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
 static int __init gpio_driver_init(void){
     char* name;
     mutex_init(&mtx1);
+    mutex_init(&mtx2);
     if(comm_role == 0) {
         name = MASTERNAME;
     }
