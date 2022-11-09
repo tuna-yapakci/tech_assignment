@@ -267,7 +267,7 @@ static char read_byte(void){
         already_awake = 0;
         wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
         already_awake = 1;
-        udelay(30);
+        udelay(80);
         b[i] = gpio_get_value(gpio_pin_number);
         udelay(85);
     }
