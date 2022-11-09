@@ -590,7 +590,7 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
         else {
             registered_process = -1;
             kthread_stop(comm_thread);
-            wake_up_interruptible(&wq);
+            //wake_up_interruptible(&wq);
             kthread_started = 0;
             queue_to_send.data_count = 0;
             queue_to_send.first_pos = 0;
