@@ -13,6 +13,7 @@
 #include <linux/kthread.h>
 #include <linux/mutex.h>
 MODULE_LICENSE("GPL");
+MODULE_AUTHOR("tuna-yapakci");
 
 #define MAGIC 'k'
 #define USER_APP_REG _IOW(MAGIC, 1, int*)
