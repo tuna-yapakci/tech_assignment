@@ -462,13 +462,9 @@ static int slave_mode(void *p) {
             //busy wait
         }
 
-        udelay(150);
-        if(gpio_get_value(gpio_pin_number) == 1){
-            continue;
-        }
-        udelay(250);
+        udelay(350);
         read_mode = (gpio_get_value(gpio_pin_number) == 1);
-        udelay(150);
+        udelay(200);
         gpio_direction_output(gpio_pin_number, 0);
         udelay(100);
         gpio_direction_input(gpio_pin_number);
