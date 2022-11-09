@@ -264,9 +264,8 @@ static char read_byte(void){
     int b[8];
     int i;
     for(i = 0; i < 8; i += 1){
-        //enable_irq(irq_num);
         wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
-        udelay(80);
+        udelay(30);
         b[i] = gpio_get_value(gpio_pin_number);
         udelay(85);
     }
@@ -377,11 +376,6 @@ static void send_message(void) {
     send_byte(checksum);
     mdelay(10);
 
-    while(gpio_get_value(gpio_pin_number) == 1 && (!kthread_should_stop())){
-            //wait until there is a reset signal
-            //busy waits, implement irq?
-        }
-
     //------before this-------
     //if command get response, send ack
     //else read ack, if ok, data_pop
@@ -409,17 +403,17 @@ static int master_mode(void *p) {
 
         status = reset();
         if(status == -1) {
-            printk("Slave is not present\n");
+            printk("Master: Slave is not present\n");
         }
         else if (status == 0) {
-            printk("Nobody has a message\n");
+            printk("Master: Nobody has a message\n");
         }
         else if (status == 1) {
-            printk("Slave has a message\n");
+            printk("Master: Slave has a message\n");
             //read_message();
         }
         else {
-            printk("Master has a message");
+            printk("Master: Master has a message");
             //send_message();
         }
         mdelay(1000); //try reducing this
@@ -451,7 +445,6 @@ static int slave_mode(void *p) {
         already_awake = 0;
         wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
         already_awake = 1;
-        printk("awaken\n");
         udelay(100);
         if(gpio_get_value(gpio_pin_number) == 1){
             continue;
@@ -463,6 +456,7 @@ static int slave_mode(void *p) {
         udelay(100);
         gpio_direction_input(gpio_pin_number);
         if(send_mode) {
+            printk("Slave: Sending message");
             udelay(50);
             gpio_direction_output(gpio_pin_number, 0);
             udelay(100);
@@ -471,6 +465,7 @@ static int slave_mode(void *p) {
             //send_message();
         }
         else if(read_mode){
+            printk("Slave: Reading message");
             udelay(250);
             //read_message();
         }
@@ -521,7 +516,7 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
         tmp.buffer[i] = msg[i];
     }
     tmp.length = count;
-    printk("%d\n", queue_to_send.data_count);
+    //printk("%d\n", queue_to_send.data_count);
     if (data_push(&queue_to_send, tmp) < 0) {
         printk(KERN_WARNING "Queue is full, write failed\n");
         return -1;
