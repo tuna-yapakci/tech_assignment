@@ -168,6 +168,7 @@ static void cleanup_func(void){
     }
     if(kthread_started) {
         kthread_stop(comm_thread);
+        wake_up_interruptible(&wq);
     }
     if(gpio_exported) {
         gpio_unexport(gpio_pin_number);
@@ -251,7 +252,7 @@ static char read_byte(void){
     int b[8];
     int i;
     for(i = 0; i < 8; i += 1){
-        enable_irq(irq_num);
+        //enable_irq(irq_num);
         wait_event_interruptible(wq, 0);
         udelay(80);
         b[i] = gpio_get_value(gpio_pin_number);
@@ -426,7 +427,7 @@ static int slave_mode(void *p) {
         mutex_unlock(&mtx1);
         send_mode = (queue_to_send.data_count > 0);
 
-        enable_irq(irq_num);
+        //enable_irq(irq_num);
         wait_event_interruptible(wq, 0);
 
         udelay(200);
@@ -542,6 +543,7 @@ static long gpioctl(struct file *filp, unsigned int cmd, unsigned long arg){
         else {
             registered_process = -1;
             kthread_stop(comm_thread);
+            wake_up_interruptible(&wq);
             kthread_started = 0;
             queue_to_send.data_count = 0;
             queue_to_send.first_pos = 0;
