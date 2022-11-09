@@ -192,6 +192,7 @@ static irqreturn_t irq_handler(int irq, void *dev_id, struct pt_regs *regs) {
     if(already_awake){
         return IRQ_HANDLED;
     }
+    printk("Waking up\n"):
     wake_up_interruptible(&wq);
     return IRQ_HANDLED;
 }
