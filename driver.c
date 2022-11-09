@@ -135,6 +135,7 @@ struct DataQueue queue_to_send;
 struct Data received_data;
 static int prev_data_not_read = 0;
 struct mutex mtx1;
+static u64 timer;
 /*
 unsigned int irq_num;
 wait_queue_head_t wq;
@@ -228,20 +229,33 @@ static int reset(void) {
     int slave_message;
     int master_message = (queue_to_send.data_count > 0);
     gpio_direction_output(gpio_pin_number, 0);
+    timer = ktime_get_ns();
     if(master_message) {
-        udelay(300);
+        //udelay(300);
+        timer += 300000;
+        while(timer > ktime_get_ns()) {}
         gpio_direction_input(gpio_pin_number);
-        udelay(200);
+        //udelay(200);
+        timer += 200000;
+        while(timer > ktime_get_ns()) {}
     }
     else{
-        udelay(500);
+        //udelay(500);
+        timer += 500000;
+        while(timer > ktime_get_ns()) {}
         gpio_direction_input(gpio_pin_number);
     }
-    udelay(100);
+    //udelay(100);
+    timer += 100000;
+    while(timer > ktime_get_ns()) {}
     slave_present = (gpio_get_value(gpio_pin_number) == 0);
-    udelay(150);
+    //udelay(150);
+    timer += 150000;
+    while(timer > ktime_get_ns()) {}
     slave_message = (gpio_get_value(gpio_pin_number) == 0);
-    udelay(150);
+    //udelay(150);
+    timer += 150000;
+    while(timer > ktime_get_ns()) {}
     if(!slave_present){
         return -1;
     }
@@ -269,6 +283,7 @@ static char read_byte(void){
     char byte = 0x00;
     int b[8];
     int i;
+    timer = ktime_get_ns();
     for(i = 0; i < 8; i += 1){
         /*
         already_awake = 0;
@@ -278,15 +293,21 @@ static char read_byte(void){
         while((gpio_get_value(gpio_pin_number) == 1)  && (!kthread_should_stop())) {
             //busy wait
         }
-        udelay(80);
+        //udelay(80);
+        timer += 80000;
+        while(timer > ktime_get_ns()) {}
         b[i] = gpio_get_value(gpio_pin_number);
-        udelay(85);
+        //udelay(85);
+        timer += 85000;
+        while(timer > ktime_get_ns()) {}
     }
 
     for(i = 0; i < 8; i += 1){
         byte = byte | (b[i] << i);
     }
-    udelay(750);
+    //udelay(750);
+    timer += 750000;
+    while(timer > ktime_get_ns()) {}
     return byte;
 }
 
@@ -353,24 +374,35 @@ static void read_message(void){
 static void send_byte(char byte) {
     int i;
     int b[8];
+    timer = ktime_get_ns();
     for(i = 0; i < 8; i += 1) {
         b[i] = (int) ((byte >> i) & (0x01)); //check if this is correct
     }
     for(i = 0; i < 8; i += 1) {
         if (b[i] == 0)  {
             gpio_direction_output(gpio_pin_number, 0);
-            udelay(130);
+            //udelay(130);
+            timer += 130000;
+            while(timer > ktime_get_ns()) {}
             gpio_direction_input(gpio_pin_number);
-            udelay(70);
+            //udelay(70);
+            timer += 70000;
+            while(timer > ktime_get_ns()) {}
         }
         else{
             gpio_direction_output(gpio_pin_number, 0);
-            udelay(30);
+            //udelay(30);
+            timer += 30000;
+            while(timer > ktime_get_ns()) {}
             gpio_direction_input(gpio_pin_number);
-            udelay(170);
+            //udelay(170);
+            timer += 170000;
+            while(timer > ktime_get_ns()) {}
         }   
     }
-    udelay(750);
+    //udelay(750);
+    timer += 750000;
+    while(timer > ktime_get_ns()) {}
 }
 
 static void send_message(void) {
@@ -459,7 +491,8 @@ static int slave_mode(void *p) {
     while(!kthread_should_stop()) {
         int send_mode;
         int read_mode = 0;
-
+        
+        timer = ktime_get_ns();
         mutex_lock(&mtx1);
         if(prev_data_not_read) {
             mutex_unlock(&mtx1);
@@ -479,28 +512,44 @@ static int slave_mode(void *p) {
             //busy wait
         }
 
-        udelay(350);
+        //udelay(350);
+        timer += 350000;
+        while(timer > ktime_get_ns()) {}
         read_mode = (gpio_get_value(gpio_pin_number) == 1);
-        udelay(200);
+        //udelay(200);
+        timer += 200000;
+        while(timer > ktime_get_ns()) {}
         gpio_direction_output(gpio_pin_number, 0);
-        udelay(100);
+        //udelay(100);
+        timer += 100000;
+        while(timer > ktime_get_ns()) {}
         gpio_direction_input(gpio_pin_number);
         if(send_mode) {
             printk("Slave: Sending message");
-            udelay(50);
+            //udelay(50);
+            timer += 50000;
+            while(timer > ktime_get_ns()) {}
             gpio_direction_output(gpio_pin_number, 0);
-            udelay(100);
+            //udelay(100);
+            timer += 100000;
+            while(timer > ktime_get_ns()) {}
             gpio_direction_input(gpio_pin_number);
-            udelay(100);
+            //udelay(100);
+            timer += 100000;
+            while(timer > ktime_get_ns()) {}
             send_message();
         }
         else if(read_mode){
             printk("Slave: Reading message");
-            udelay(250);
+            //udelay(250);
+            timer += 250000;
+            while(timer > ktime_get_ns()) {}
             read_message();
         }
         else {
-            udelay(250);
+            //udelay(250);
+            timer += 250000;
+            while(timer > ktime_get_ns()) {}
         }
     }
     return 0;
