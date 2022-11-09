@@ -137,6 +137,7 @@ static int prev_data_not_read = 0;
 struct mutex mtx1;
 unsigned int irq_num;
 wait_queue_head_t wq;
+int already_awake;
 
 //enables indicating the pin number during initialization
 //S_IRUGO means the parameter can be read but cannot be changed
@@ -188,7 +189,9 @@ static void cleanup_func(void){
 static irqreturn_t irq_handler(int irq, void *dev_id, struct pt_regs *regs) {
     //make kthread wake up from sleep
     //printk("irq triggered\n");
-    disable_irq(irq_num);
+    if(already_awake){
+        return IRQ_HANDLED;
+    }
     wake_up_interruptible(&wq);
     return IRQ_HANDLED;
 }
@@ -444,9 +447,9 @@ static int slave_mode(void *p) {
         send_mode = (queue_to_send.data_count > 0);
 
         //wait till gpio reads 0;
-        enable_irq(irq_num);
+        already_awake = 0;
         wait_event_interruptible(wq, gpio_get_value(gpio_pin_number) == 0);
-
+        already_awake = 1;
         udelay(150);
         if(gpio_get_value(gpio_pin_number) == 1){
             continue;
