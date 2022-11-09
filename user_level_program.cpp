@@ -35,7 +35,23 @@ void signal_handler(int sig_num) {
         u_int8_t l = (u_int8_t) str[0];
         int len = (int) l;
         str[len + 1] = '\0';
-        std::cout << "The other side says: " << &(str[1]) << std::endl;
+        if (str[1] == 0xBB) {
+            std::cout << "The other side commands: " << &(str[2]) << std::endl;
+            std::string msg;
+            msg[0] = 0xBC;
+            for (int i = 0; i < len; i += 1) {
+                msg[i+1] = str[i+2];
+            }
+            if(send_message(&msg, 0) < 0) {
+                std::cout << "Error responding to command (queue might be full)" << std::endl;
+            }
+            else {
+                std::cout << "Replied to command, length = " << msg.length() << std::endl;
+            }
+        }
+        else {
+            std::cout << "The other side says: " << &(str[1]) << std::endl;
+        }
     }
     close(file);
 }

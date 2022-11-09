@@ -81,6 +81,20 @@ static int data_push(struct DataQueue *queue, struct Data data) {
     return 0;
 }
 
+static int data_add_front(struct DataQueue *queue, struct Data data) {
+    if (queue->data_count == queue_size) {
+        return -1
+    }
+    int new_pos = (queue->first_pos) - 1;
+    if (new_pos == -1) {
+        new_pos = queue_size - 1;
+    }
+    queue->first_pos = new_pos;
+    queue->array_pt[queue->first_pos] = data;
+    queue->data_count += 1;
+    return 0;
+}
+
 //this function copies first element and removes it from the queue
 static int data_pop(struct DataQueue *queue, struct Data *data_to_copy) {
     int i;
@@ -534,13 +548,25 @@ static ssize_t gpio_write(struct file *filp, const char __user *buff, size_t cou
         tmp.buffer[i] = msg[i];
     }
     tmp.length = count;
-    mutex_lock(&mtx2);
-    if (data_push(&queue_to_send, tmp) < 0) {
+    
+    if (tmp.buffer[0] == 0xBC) {
+        mutex_lock(&mtx2);
+        if (data_add_front(&queue_to_send, tmp) < 0) {
+            mutex_unlock(&mtx2);
+            printk(KERN_WARNING "Queue is full, write failed\n");
+            return -1;
+        };
         mutex_unlock(&mtx2);
-        printk(KERN_WARNING "Queue is full, write failed\n");
-        return -1;
-    };
-    mutex_unlock(&mtx2);
+    }
+    else {
+        mutex_lock(&mtx2);
+        if (data_push(&queue_to_send, tmp) < 0) {
+            mutex_unlock(&mtx2);
+            printk(KERN_WARNING "Queue is full, write failed\n");
+            return -1;
+        };
+        mutex_unlock(&mtx2);
+    }
     return count;
 }
 
