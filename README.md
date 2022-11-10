@@ -13,7 +13,7 @@ done between two different GPIO pins controlled by two different drivers.
 
 How to use the code, and how it works----------------------------------------------------------------------------------
 
-The code is compiled and tested on a Raspberry Pi 3 Model B Rev 1.2, on Raspbian with kernel version 5.10.103-v7+.
+The code is compiled and tested on a Raspberry Pi 3 Model B Rev 1.2, on Raspbian OS with kernel version 5.10.103-v7+.
 The file driver.c implements a kernel device driver. The communication protocol is controled in kernel level.
 
 The file user_level_program.cpp implements a simple user level program that reads user input as messages to send, and prints
@@ -72,6 +72,7 @@ Both sender and reader waits for 750us between each byte.
 
 After sending 13 bytes sender waits for acknowledgement byte, that is 0x0F if the message is received successfully, or 0x00 if an error occurred.
 (13 is the maximum message length including header, length and checksum) (If the message is shorter remaining bytes are sent as 0xFF)
+
 -------------------------------------------------------------------------------------------------------------------------
 
 Please feel free to ask me if you have any question.
