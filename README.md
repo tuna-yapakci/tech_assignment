@@ -57,11 +57,11 @@ The protocol works as follows:
 Reset period takes around 900us in total
 
 Depending on the information that is exchanged during the reset period:
--If none of the sides has a message, master waits for 10ms then resets the communication.
--If both have a message, slave sends first and master reads.
+- If none of the sides has a message, master waits for 10ms then resets the communication.
+- If both have a message, slave sends first and master reads.
 
--Immediately after the reset period, the reader side enters reading mode and the sender enters sending mode.
--Functions for reading and sending a message is the same for both roles.
+- Immediately after the reset period, the reader side enters reading mode and the sender enters sending mode.
+- Functions for reading and sending a message is the same for both roles.
 
 One bit is transfered in 100us like this:
 - To send a 1, sender pulls the line low for 15us, then releases it for 85us
