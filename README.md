@@ -13,7 +13,7 @@ done between two different GPIO pins controlled by two different drivers.
 
 How to use the code, and how it works----------------------------------------------------------------------------------
 
-The code is compiled and tested on a Raspberry Pi 3 Model B Rev 1.2, on Raspbian with kernel version 5.10.103-v7+
+The code is compiled and tested on a Raspberry Pi 3 Model B Rev 1.2, on Raspbian with kernel version 5.10.103-v7+.
 The file driver.c implements a kernel device driver. The communication protocol is controled in kernel level.
 
 The file user_level_program.cpp implements a simple user level program that reads user input as messages to send, and prints
@@ -36,7 +36,7 @@ The Wiring----------------------------------------------------------------------
 A picture of the wiring scheme that was used during the testing can be found on the repo.
 Red cable is connected to power to generate the pullup.
 White and black cables are connected to GPIO pins 22 and 17.
-The pullup resistor is 10k ohms (if I understood correctly less would be better for fast pullup, however 10k is the only one I had)
+The pullup resistor is 10k ohms (if I understood correctly less would be better for fast pullup, however 10k is the only one I had).
 
 The Communication Protocol---------------------------------------------------------------------------------------------
 
@@ -70,9 +70,8 @@ One bit is transfered in 100us like this:
 
 Both sender and reader waits for 750us between each byte.
 
-After reading 13 bytes (max message length, including header, length and checksum) (If the message is shorter remaining bytes are sent as 0xFF)
-Sender waits for acknowledgement byte, that is 0x0F if the message is received successfully, or 0x00 if an error occurred.
-
+After sending 13 bytes sender waits for acknowledgement byte, that is 0x0F if the message is received successfully, or 0x00 if an error occurred.
+(13 is the maximum message length including header, length and checksum) (If the message is shorter remaining bytes are sent as 0xFF)
 -------------------------------------------------------------------------------------------------------------------------
 
-Please feel free to ask me if you have any question
+Please feel free to ask me if you have any question.
